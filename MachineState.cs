@@ -35,7 +35,7 @@ namespace Sui.Machine
     /// <br />
     /// --------------------------------------------------------------
     /// </summary>
-    public class MachineState<O> : IMachineState where O : class
+    public class MachineState<O> : IMachineState where O : MonoBehaviour
     {
         // ***********************( Variables/Declaraciones )*********************** //
         private StateBase _estadoActual { get; set; } = null; // Representa el estado actual de la maquina.

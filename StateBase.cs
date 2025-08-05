@@ -198,7 +198,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal void GestionEntrar<O>(MachineState<O> maquina) where O : class
+        internal void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             ThisComponent = GetComponent(GetType());
             GetIndex(maquina);
@@ -396,7 +396,7 @@ namespace Sui.Machine
             return false;
         }
 
-        int GetIndex<O>(MachineState<O> maquina) where O : class
+        int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             int _indice_i = maquina.GetIndex(this);
             Index = _indice_i;
