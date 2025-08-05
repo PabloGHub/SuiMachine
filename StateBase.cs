@@ -118,7 +118,6 @@ namespace Sui.Machine
         {
             // Deberia funcionar pero hay que testealo pues tengo malas experiencias.
             this.ThisComponent = this.GetComponent(this.GetType());
-            GetIndex(maquina); // TODO: (Areglar)Cuando se llama todavia no esta en _estadosPosibles y salta error.
 
             _entrarDesde = new Dictionary<Type, Action>();
             _salirDesde = new Dictionary<Type, Action>();
@@ -239,7 +238,13 @@ namespace Sui.Machine
         {
             
         }
-
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
+        internal void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            GetIndex(maquina);
+        }
 
         // ---> usuario: 
         /// <summary>

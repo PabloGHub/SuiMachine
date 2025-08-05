@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,6 +29,14 @@ namespace Sui.Machine
 
     // TODO: Gestionar de alguna manera cuando cualquiera haga .Add sobre _estadosPosibles.
 
+    /*
+        // Problema: llama al Add de List en vez de ListState.
+        var _estadoMoviendose = machineState.CreateState<EstadoMoviendose>();
+        machineState.PosibleStates.Add(_estadoMoviendose);
+     */
+
+
+
     /// <summary>
     /// --------------------------------------------------------------
     /// <br />
@@ -37,13 +46,72 @@ namespace Sui.Machine
     /// </summary>
     public class MachineState<O> : IMachineState where O : MonoBehaviour
     {
+        // ***********************( ListState )*********************** //
+        private class ListState : List<StateBase>
+        {
+            private readonly MachineState<O> _machineState;
+
+            // Constructores.
+            public ListState(MachineState<O> machineState)
+            {
+                _machineState = machineState;
+            }
+
+            public ListState(MachineState<O> machineState, IEnumerable<StateBase> collection) : base(collection)
+            {
+                _machineState = machineState;
+                foreach (var item in collection)
+                {
+                    _machineState.GestionarEstado(item);
+                }
+            }
+
+            // Getters y Setters.
+            public IEnumerable<StateBase> Asignacion
+            {
+                get
+                {
+                    return new List<StateBase>(this);
+                }
+                set
+                {
+                    if (value == null)
+                    {
+                        Debug.LogError($"({_machineState._go.name}->MachineState): the collection is null.");
+                        return;
+                    }
+                    base.Clear();
+                    foreach (var item in value)
+                    {
+                        this.Add(item);
+                    }
+                }
+            }
+
+            // Metodos.
+            public new void Add(StateBase item)
+            {
+                base.Add(item);
+                _machineState?.GestionarEstado(item);
+                item.AlEntrarEstadosPosibles(_machineState);
+            }
+
+            public new void AddRange(IEnumerable<StateBase> collection)
+            {
+                foreach (var item in collection)
+                {
+                    this.Add(item);
+                }
+            }
+        }
+
         // ***********************( Variables/Declaraciones )*********************** //
         private StateBase _estadoActual { get; set; } = null; // Representa el estado actual de la maquina.
 
-        private List<StateBase> _estadosPosibles { get; set; } = new();
+        private ListState _estadosPosibles { get; set; }
         [Obsolete("GetIndex ya recorre los estados posibles")]
         private Dictionary<string, int> _nombresEstados = new();
-        private List<StateBase> _estadosPersistentes = new();
+        private ListState _estadosPersistentes;
 
         private Dictionary<Func<bool>, StateBase> _transiciones = new();
         private GameObject _go;
@@ -170,9 +238,9 @@ namespace Sui.Machine
                     return;
                 }
 
-                annadirEstadosTodos(value);
+                //annadirEstadosTodos(value);
 
-                _estadosPosibles = value;
+                _estadosPosibles.Asignacion = (ListState)value;
             }
         }
 
@@ -201,9 +269,9 @@ namespace Sui.Machine
                     return;
                 }
 
-                annadirEstadosTodos(value);
+                //annadirEstadosTodos(value);
 
-                _estadosPosibles = value;
+                _estadosPosibles.Asignacion = (ListState)value;
             }
         }
 
@@ -388,6 +456,7 @@ namespace Sui.Machine
             return new List<string>(NamesStates);
         }
 
+        [Obsolete("Para eso esta ListState")]
         private void annadirEstadosTodos(List<StateBase> value)
         {
             foreach (var _estadoIndividual in value)
@@ -412,6 +481,20 @@ namespace Sui.Machine
             }
             return new List<string>(NamesStates);
         }
+
+
+
+        internal void GestionarEstado(StateBase e_estado)
+        {
+            if (e_estado != null)
+            {
+                if (e_estado.Identificador <= 0)
+                    e_estado.Identificador = f_solicitarIde_i();
+                if (!this._todosEstados.Contains(e_estado.Identificador))
+                    this._todosEstados.Add(e_estado.Identificador);
+            }
+        }
+
 
         // NOTA: no se si dejarlo pues hace lo mismo que 'PosibleStates'.
         public List<StateBase> ChangeListSates(List<StateBase> _novoLista)
@@ -733,6 +816,18 @@ namespace Sui.Machine
             return f_crearEstado_T<T>();
         }
 
+        public static T CreateState<T>(GameObject e_go, O e_source_O, MachineState<O> e_ms) where T : StateBase
+        {
+            T estado = e_go.AddComponent<T>();
+            estado.enabled = false;
+            //estado.Identificador = f_solicitarIde_i();
+            estado.Source = e_source_O;
+            estado.ConstructorGestion(e_ms);
+            estado.Init(e_source_O);
+
+            return estado;
+        }
+
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Crea un nuevo estado de tipo T y lo inicializa con la dependencia proporcionada.<br />
@@ -743,23 +838,24 @@ namespace Sui.Machine
         /// <typeparam name="T">Estado que se quiera craer</typeparam>
         public void CreateStateAutoAdd<T>() where T : StateBase
         {
-            T estado = f_crearEstado_T<T>();
+            T novoEstado = f_crearEstado_T<T>();
 
-            if (!_estadosPosibles.Contains(estado))
-                _estadosPosibles.Add(estado);
+            novoEstado.Identificador = f_solicitarIde_i();
+
+            if (!_estadosPosibles.Contains(novoEstado))
+                _estadosPosibles.Add(novoEstado);
             else
-                Debug.LogWarning($"({_go.name}->MachineState): El estado {estado.GetType().Name} ya existe en la lista de estados posibles.");
-
-            _todosEstados.Add(estado.Identificador);
+                Debug.LogWarning($"({_go.name}->MachineState): El estado {novoEstado.GetType().Name} ya existe en la lista de estados posibles.");
         }
 
         // TODO: Descubrir porque en medio del porceso salta un warging proveniente de GetIndex.
+        // Porque llama a GetIndex (en ConstructorGestion) antes de añadirlo a estados posibles.
         private T f_crearEstado_T<T>() where T : StateBase
         {
             T estado = _go.AddComponent<T>();
             estado.enabled = false;
             //estado.MachineState = this;
-            estado.Identificador = f_solicitarIde_i();
+            //estado.Identificador = f_solicitarIde_i();
             estado.Source = _source_O;
             estado.ConstructorGestion(this);
             estado.Init(_source_O);
@@ -797,8 +893,8 @@ namespace Sui.Machine
                 return;
             }
 
-            _transiciones ??= new Dictionary<Func<bool>, StateBase>();
-            _estadosPosibles ??= new List<StateBase>();
+            _transiciones ??= new();
+            _estadosPosibles ??= new(this);
 
             _go = goHost;
             this._source_O = _source_O;
