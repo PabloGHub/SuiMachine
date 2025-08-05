@@ -47,6 +47,7 @@ namespace Sui.Machine
     public class MachineState<O> : IMachineState where O : MonoBehaviour
     {
         // ***********************( ListState )*********************** //
+        // TODO: sacar al namespace para que cualquiero pueda usarlo y asegurar que no haya problemas al hacerlo.
         private class ListState : List<StateBase>
         {
             private readonly MachineState<O> _machineState;
@@ -218,7 +219,7 @@ namespace Sui.Machine
         /// get: Devuelve la lista de estados posibles.<br />
         /// set: Sustituye la lista de estados posibles.<br />
         /// </summary>
-        public List<StateBase> PosibleStates
+        public List<StateBase> PossibleStates
         {
             get
             {
@@ -295,7 +296,7 @@ namespace Sui.Machine
         {
             get
             {
-                return string.Join(", ", PosibleStates.Select(e => e.GetType().Name));
+                return string.Join(", ", PossibleStates.Select(e => e.GetType().Name));
             }
         }
 
@@ -511,9 +512,9 @@ namespace Sui.Machine
             }
 
             State = null;
-            PosibleStates = _novoLista;
+            PossibleStates = _novoLista;
 
-            return PosibleStates;
+            return PossibleStates;
         }
 
         // ---( Asincronos )--- //
@@ -866,7 +867,7 @@ namespace Sui.Machine
         // ***********************( Constructores )*********************** //
         public MachineState(GameObject goHost, List<StateBase> estadosPosibles, O _source_O)
         {
-            PosibleStates = estadosPosibles ?? new List<StateBase>();
+            PossibleStates = estadosPosibles ?? new List<StateBase>();
 
             inicializar(goHost, _source_O);
         }
