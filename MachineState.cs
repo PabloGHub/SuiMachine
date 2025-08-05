@@ -35,7 +35,7 @@ namespace Sui.Machine
     /// <br />
     /// --------------------------------------------------------------
     /// </summary>
-    public class MachineState<O> : IMachineState where O : MonoBehaviour
+    public class MachineState<O> : IMachineState where O : class
     {
         // ***********************( Variables/Declaraciones )*********************** //
         private StateBase _estadoActual { get; set; } = null; // Representa el estado actual de la maquina.
@@ -158,7 +158,7 @@ namespace Sui.Machine
             }
             set
             {
-                if (PosibleStates == null)
+                if (value == null)
                 {
                     Debug.LogError($"({_go.name}->MachineState): La lista de estados posibles es null.");
                     return;
