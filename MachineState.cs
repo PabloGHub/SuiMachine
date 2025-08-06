@@ -241,7 +241,7 @@ namespace Sui.Machine
 
                 //annadirEstadosTodos(value);
 
-                _estadosPosibles.Asignacion = (ListState)value;
+                _estadosPosibles.Asignacion = value;
             }
         }
 
@@ -272,7 +272,7 @@ namespace Sui.Machine
 
                 //annadirEstadosTodos(value);
 
-                _estadosPosibles.Asignacion = (ListState)value;
+                _estadosPosibles.Asignacion = value;
             }
         }
 
