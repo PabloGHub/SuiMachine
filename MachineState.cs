@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +19,7 @@ namespace Sui.Machine
     // TODO: Esta creado lo nombres, ahora toca Implentarlo en los demas sistemas (Usar nombres en vez del indice).
     // NOTA: que nombres? no me acuerdo, me falta contexto XD.
     // TODO: Poder borrar estados de la lista de estados posibles.
-    // TODO: Traducir todos los summary a ambos idiomas (EspaÒol e Ingles).
+    // TODO: Traducir todos los summary a ambos idiomas (Espa√±ol e Ingles).
     // TODO: Un SetSate que fuerce la salida sin pasar por Exit pero si por Enter del siguiente.
 
     // TODO: Hacer un sistema de Identificadores para las maquinas de estados.
@@ -127,9 +127,16 @@ namespace Sui.Machine
         private int _crescendoId_i = 0;
 
         // ***********************( Getters y Setters )*********************** //
+        // TODO: Si llega un State desconocido, que se cree automaticamente y se a√±ada a la lista de estados posibles.
         public StateBase State
         {
-            get { return _estadoActual; }
+            get
+            {
+                //if (_estadoActual == null)
+                //    Debug.Log($"({_go.name}->MachineState): return State Null.");
+
+                return _estadoActual;
+            }
             set
             {
                 if (_estadoActual == value)
@@ -171,7 +178,7 @@ namespace Sui.Machine
             {
                 if (_indice_i < 0 || _indice_i >= _estadosPosibles.Count)
                 {
-                    Debug.LogError($"({_go.name}->MachineState): El Ìndice de estado es inv·lido.");
+                    Debug.LogError($"({_go.name}->MachineState): El √≠ndice de estado es inv√°lido.");
                     return null;
                 }
                 return _estadosPosibles[_indice_i];
@@ -180,7 +187,7 @@ namespace Sui.Machine
             {
                 if (_indice_i < 0)
                 {
-                    Debug.LogError($"({_go.name}->MachineState): El Ìndice de estado es inv·lido.");
+                    Debug.LogError($"({_go.name}->MachineState): El √≠ndice de estado es inv√°lido.");
                     return;
                 }
                 _estadosPosibles[_indice_i] = value;
@@ -235,7 +242,7 @@ namespace Sui.Machine
 
                 if (value.Count == 0)
                 {
-                    Debug.LogError($"({_go.name}->MachineState): La lista de estados posibles no puede estar vacÌa.");
+                    Debug.LogError($"({_go.name}->MachineState): La lista de estados posibles no puede estar vac√≠a.");
                     return;
                 }
 
@@ -301,8 +308,8 @@ namespace Sui.Machine
         }
 
         /// <summary>
-        /// get: Devuelve si la m·quina de estados est· activa.<br />
-        /// set: Activa o desactiva la m·quina de estados.<br />
+        /// get: Devuelve si la m√°quina de estados est√° activa.<br />
+        /// set: Activa o desactiva la m√°quina de estados.<br />
         /// NOTA: No pasa por Enter ni Exit.
         /// </summary>
         public bool Active
@@ -343,26 +350,23 @@ namespace Sui.Machine
 
         // ***********************( Metodos de Estados )*********************** //
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
-        /// Cambia el estado actual de la m·quina de estados.<br />
+        /// ___________________( Espa√±ol )___________________<br />
+        /// Cambia el estado actual de la m√°quina de estados.<br />
         /// ___________________( English )___________________<br />
         /// Changes the current state of the state machine.<br />
         /// </summary>
         /// <param name="_nuevoEstado_i">Es: Posicion en int del 'estadosPosibles' <br /> En: Position in int of 'PossibleStates'</param>
         public StateBase ChangeState(int _nuevoEstado_i)
         {
-            if (_estadosPosibles == null)
-                return null;
-
             if (!cambiarEstado(_nuevoEstado_i, out var _novoState_obj))
                 return null;
 
             return _novoState_obj;
         }
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
+        /// ___________________( Espa√±ol )___________________<br />
         /// Cambia el estado actual al respectivo nombre.<br />
-        /// AÒadalo primero a la lista o utilice 'CreateStateAutoAdd'.<br />
+        /// A√±adalo primero a la lista o utilice 'CreateStateAutoAdd'.<br />
         /// ___________________( English )___________________<br />
         /// Changes the current state to the respective name.<br />
         /// Add it first to the list or use 'CreateStateAutoAdd'.<br />
@@ -371,9 +375,6 @@ namespace Sui.Machine
         /// <returns>Es: Retorna el nuevo estado cambiado <br />En: Returns the new changed state</returns>
         public StateBase ChangeState(string _novoEstado_s)
         {
-            if (_estadosPosibles == null)
-                return null;
-
             if (string.IsNullOrEmpty(_novoEstado_s))
             {
                 Debug.LogError("(MachineState -> ChangeState): The name of the new state is null or empty.");
@@ -386,7 +387,7 @@ namespace Sui.Machine
             return _novoState_obj;
         }
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
+        /// ___________________( Espa√±ol )___________________<br />
         /// Cambia el estado actual al respectivo.<br />
         /// ___________________( English )___________________<br />
         /// Changes the current state to the respective.<br />
@@ -408,6 +409,9 @@ namespace Sui.Machine
         private bool cambiarEstado(int _nuevoEstado_i, out StateBase _salida)
         {
             _salida = null;
+
+            if (_estadosPosibles == null)
+                return false;
 
             if (_nuevoEstado_i < 0 || _nuevoEstado_i >= _estadosPosibles.Count)
             {
@@ -507,7 +511,7 @@ namespace Sui.Machine
             }
             if (_novoLista.Count == 0)
             {
-                Debug.LogError($"({_go.name}->MachineState): La nueva lista de estados posibles esta vacÌa.");
+                Debug.LogError($"({_go.name}->MachineState): La nueva lista de estados posibles esta vac√≠a.");
                 return null;
             }
 
@@ -655,32 +659,37 @@ namespace Sui.Machine
 
 
         // ***********************( Metodos Transiciones )*********************** //
-        /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
-        /// Agrega una transiciÛn a la m·quina de estados. <br /> 
-        /// Una transicion es una condiciÛn que, al cumplirse, cambia el estado actual de la m·quina.<br />
-        /// </summary>
-        /// <param name="condicion">Es la condicion en lamda para cambiar '() => _parar_b == true'</param>
-        /// <param name="estadoDestino">Estado al que cambiara pasando el int de la posicion de 'estadosPosibles'</param>
-        public void AgregarTransicion(Func<bool> condicion, int estadoDestino)
+        public bool AddTransition(Func<bool> condition, int stateDestine)
         {
-            if (_transiciones == null)
-                _transiciones = new Dictionary<Func<bool>, StateBase>();
+            return this.AgregarTransicion(condition, stateDestine);
+        }
 
-            if (estadoDestino < 0 || estadoDestino >= _estadosPosibles.Count)
+        /// <summary>
+        /// ___________________( Espa√±ol )___________________<br />
+        /// Agrega una transici√≥n a la m√°quina de estados. <br /> 
+        /// Una transicion es una condici√≥n que, al cumplirse, cambia el estado actual de la m√°quina.<br />
+        /// </summary>
+        /// <param name="e_condicion_fb">Es la condicion en lamda para cambiar '() => _parar_b == true'</param>
+        /// <param name="e_estadoDestino_i">Estado al que cambiara pasando el int de la posicion de 'estadosPosibles'</param>
+        public bool AgregarTransicion(Func<bool> e_condicion_fb, int e_estadoDestino_i)
+        {
+            _transiciones ??= new();
+
+            if (e_estadoDestino_i < 0 || e_estadoDestino_i >= _estadosPosibles.Count)
             {
-                Debug.LogError($"({_go.name}->MachineState): El Ìndice de estado destino es inv·lido en AgregarTransicion.");
-                return;
+                Debug.LogError($"({_go.name}->MachineState): The destination state index is invalid in AddTransition.");
+                return false;
             }
 
-            _transiciones[condicion] = _estadosPosibles[estadoDestino];
-            //Debug.Log($"TransiciÛn agregada: {estadosPosibles[estadoDestino].GetType().Name}");
+            _transiciones[e_condicion_fb] = _estadosPosibles[e_estadoDestino_i];
+            //Debug.Log($"Transici√≥n agregada: {estadosPosibles[estadoDestino].GetType().Name}");
+            return true;
         }
 
 
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
-        /// Actualiza las transiciones de la m·quina de estados.
+        /// ___________________( Espa√±ol )___________________<br />
+        /// Actualiza las transiciones de la m√°quina de estados.
         /// </summary>
         public void UpdateTransitions()
         {
@@ -707,8 +716,8 @@ namespace Sui.Machine
 
         // ***********************( Indices )*********************** //
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
-        /// Obtiene el Ìndice del estado en la lista de estados posibles.<br />
+        /// ___________________( Espa√±ol )___________________<br />
+        /// Obtiene el √≠ndice del estado en la lista de estados posibles.<br />
         /// ___________________( English )___________________<br />
         /// Gets the index of the state in the list of possible states.<br />
         /// </summary>
@@ -732,8 +741,8 @@ namespace Sui.Machine
         }
 
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
-        /// Obtiene el Ìndice del estado en la lista de estados posibles.<br />
+        /// ___________________( Espa√±ol )___________________<br />
+        /// Obtiene el √≠ndice del estado en la lista de estados posibles.<br />
         /// ___________________( English )___________________<br />
         /// Gets the index of the state in the list of possible states.<br />
         /// </summary>
@@ -765,7 +774,7 @@ namespace Sui.Machine
         {
             if (string.IsNullOrEmpty(nombreEstado))
             {
-                Debug.LogError($"({_go.name}->MachineState): El nombre del estado proporcionado es nulo o vacÌo.");
+                Debug.LogError($"({_go.name}->MachineState): El nombre del estado proporcionado es nulo o vac√≠o.");
                 return -1;
             }
             GenerateNamesStates();
@@ -797,18 +806,18 @@ namespace Sui.Machine
         }
 
         // ***********************( Serealizacion )*********************** //
-        // TODO: Implementar un sistema de serializaciÛn para guardar la m·quina de estados.
+        // TODO: Implementar un sistema de serializaci√≥n para guardar la m√°quina de estados.
 
 
 
         // ***********************( Funciones Constructores )*********************** //
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
+        /// ___________________( Espa√±ol )___________________<br />
         /// Crea un nuevo estado de tipo T y lo inicializa con la dependencia proporcionada.<br />
         /// LLama al metodo Init() del estado.<br />
         /// -----------------<br />
-        /// Importante: No aÒade a los estados posibles, Tendra que aÒadilos usted manualmente.<br />
-        /// si quiero aÒadirlo automaticamente utilice 'CreateStateAutoAdd'.<br />
+        /// Importante: No a√±ade a los estados posibles, Tendra que a√±adilos usted manualmente.<br />
+        /// si quiero a√±adirlo automaticamente utilice 'CreateStateAutoAdd'.<br />
         /// </summary>
         /// <typeparam name="T">Estado que se quiera craer</typeparam>
         /// <returns>Es: Retorna el nuevo estado desactivado.</returns>
@@ -830,11 +839,11 @@ namespace Sui.Machine
         }
 
         /// <summary>
-        /// ___________________( EspaÒol )___________________<br />
+        /// ___________________( Espa√±ol )___________________<br />
         /// Crea un nuevo estado de tipo T y lo inicializa con la dependencia proporcionada.<br />
         /// LLama al metodo Init() del estado.<br />
         /// -----------------<br />
-        /// Importante: AÒade automaticamente a los estados posibles.<br />
+        /// Importante: A√±ade automaticamente a los estados posibles.<br />
         /// </summary>
         /// <typeparam name="T">Estado que se quiera craer</typeparam>
         public void CreateStateAutoAdd<T>() where T : StateBase
@@ -850,7 +859,7 @@ namespace Sui.Machine
         }
 
         // TODO: Descubrir porque en medio del porceso salta un warging proveniente de GetIndex.
-        // Porque llama a GetIndex (en ConstructorGestion) antes de aÒadirlo a estados posibles.
+        // Porque llama a GetIndex (en ConstructorGestion) antes de a√±adirlo a estados posibles.
         private T f_crearEstado_T<T>() where T : StateBase
         {
             T estado = _go.AddComponent<T>();
