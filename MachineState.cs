@@ -123,7 +123,7 @@ namespace Sui.Machine
         private bool _activo_b = true;
 
         // --- Gestion.
-        private List<int> _todosEstados = new();
+        private HashSet<int> _todosEstados = new();
         private int _crescendoId_i = 0;
 
         // ***********************( Getters y Setters )*********************** //
