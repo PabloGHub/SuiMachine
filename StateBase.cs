@@ -13,7 +13,7 @@ namespace Sui.Machine
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Clase padre/original donde se instancio la Maquina de Estados.<br />
-        /// ___________________( English )_________________<br />
+        /// ___________________( English )___________________<br />
         /// Class parent/original where the State Machine was instantiated.<br />
         /// </summary>
         public MonoBehaviour Source
@@ -252,17 +252,17 @@ namespace Sui.Machine
         /// Se ejecutara al entrar al estado.<br />
         /// - Al llamar a Start() se ejecutara la primera vez que entre al estado.<br />
         /// - Se llama despues de OnEnlable()<br />
-        /// _____________________( English )___________________<br />
+        /// ___________________( English )___________________<br />
         /// Will be executed when entering the state.<br />
         /// - When calling Start(), it will be executed the first time you enter the state.<br />
         /// - It is called after OnEnable().<br />
         /// </summary>
         public abstract void Enter();
         /// <summary>
-        /// ____________________( Español )___________________<br />
+        /// ___________________( Español )___________________<br />
         /// Se ejecutara al salir del estado.<br />
         /// - Se llama antes de OnDisable().<br />
-        /// _____________________( English )___________________<br />
+        /// ___________________( English )___________________<br />
         /// Will be executed when leaving the state.<br />
         /// - It is called before OnDisable().<br />
         /// </summary>
