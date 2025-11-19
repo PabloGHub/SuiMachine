@@ -144,9 +144,9 @@ namespace Sui.Machine
 
                 if (_estadoActual != null)
                 {
-                    _estadoActual.GestionSalir();
+                    _estadoActual.GestionSalir(this);
                     if (!_estadoActual.F_CambioExit_b(value)) { _estadoActual.Exit(); }
-                    _estadoActual.GestionTrasSalir();
+                    _estadoActual.GestionTrasSalir(this);
 
                     _estadoActual.enabled = false;
                 }
@@ -164,7 +164,7 @@ namespace Sui.Machine
 
                 _estadoActual.GestionEntrar(this);
                 if (!_estadoActual.F_CambioEnter_b(_estadoAnterior)) { _estadoActual.Enter(); }
-                _estadoActual.GestionTrasEntrar();
+                _estadoActual.GestionTrasEntrar(this);
 
                 ActualizarTransiciones();
             }
@@ -522,6 +522,12 @@ namespace Sui.Machine
         }
 
 
+        public void StopCoroutine(ref Coroutine eCoroutine)
+        {
+            _go.GetComponent<O>().StopCoroutine(eCoroutine);
+            eCoroutine = null;
+        }
+
         // ***********************( Metodos Forzar )*********************** //
         public void ForceExit()
         {
@@ -797,7 +803,7 @@ namespace Sui.Machine
         private S f_crearEstado_T<S>() where S : IState
         {
             S estado; 
-             
+            
             // Comprobar si S es un MonoBehaviour.
             if (typeof(MonoBehaviour).IsAssignableFrom(typeof(S)))
             {
@@ -830,6 +836,9 @@ namespace Sui.Machine
             estado.Source = _source_O;
             estado.ConstructorGestion(this);
             estado.Init(_source_O);
+
+            estado.ChangeInt += (int valor) => ChangeState(valor);
+            estado.ChangeIState += (IState estado) => { State = estado; };
 
             return estado;
         }

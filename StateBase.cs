@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections;
 
 namespace Sui.Machine
 {
@@ -28,6 +29,9 @@ namespace Sui.Machine
         event Action OnFirtsEnter;
         event Action<int> OnChangeId;
 
+        event Action<int> ChangeInt;
+        event Action<IState> ChangeIState;
+
         // ***********************( Contructores )*********************** //
         void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour;
         void Init<T>(T source);
@@ -43,9 +47,9 @@ namespace Sui.Machine
 
         // ***********************( Metodos de Control )*********************** //
         void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour;
-        void GestionTrasEntrar();
-        void GestionSalir();
-        void GestionTrasSalir();
+        void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour;
+        void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour;
+        void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour;
 
         // ***********************( Metodos Funcionales )*********************** //
         bool F_CambioEnter_b<S>(S eEstado) where S : IState;
@@ -56,12 +60,7 @@ namespace Sui.Machine
 
     public interface ITransitionState
     {
-        Base_StateBase Transition();
-    }
-
-    public interface ITransitionIndexState
-    {
-        int Transition();
+        IEnumerator Transition();
     }
 
     // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
@@ -82,6 +81,8 @@ namespace Sui.Machine
 
         public event Action OnFirtsEnter;
         public event Action<int> OnChangeId;
+        public event Action<int> ChangeInt;
+        public event Action<IState> ChangeIState;
 
         public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
@@ -128,17 +129,17 @@ namespace Sui.Machine
             throw new NotImplementedException();
         }
 
-        public void GestionSalir()
+        public void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             throw new NotImplementedException();
         }
 
-        public void GestionTrasEntrar()
+        public void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             throw new NotImplementedException();
         }
 
-        public void GestionTrasSalir()
+        public void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             throw new NotImplementedException();
         }
@@ -189,6 +190,8 @@ namespace Sui.Machine
 
         private int _indice_i = -1;
         private Component _esteComponente = null;
+
+        private Coroutine _transicion;
 
         private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
         private Dictionary<Type, Action> _salirDesde { get; set; } = new();
@@ -266,6 +269,8 @@ namespace Sui.Machine
         // ***********************( Eventos )*********************** //
         public event Action OnFirtsEnter;
         public event Action<int> OnChangeId;
+        public event Action<int> ChangeInt;
+        public event Action<IState> ChangeIState;
 
 
         // ***********************( Contructores )*********************** //
@@ -350,6 +355,16 @@ namespace Sui.Machine
             _salirDesde[_tipo] = _fun;
         }
 
+        // ***********************( Metodos de Transiciones )*********************** //
+        public void EndTransition(int eProximo)
+        {
+            ChangeInt?.Invoke(eProximo);
+        }
+        public void EndTrasition(IState eProximo)
+        {
+            ChangeIState?.Invoke(eProximo);
+        }
+
 
         // ***********************( Metodos de Control )*********************** //
         /// <summary>
@@ -363,31 +378,30 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionTrasEntrar()
+        public void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             if (EntrarPrimeraVez)
                 OnFirtsEnter?.Invoke();
 
-            if (this is ITransitionIndexState estadoIndex)
+            if (this is ITransitionState estado)
             {
-                
-            }
-            else if (this is ITransitionState estadoState)
-            {
-
+                _transicion = StartCoroutine(estado.Transition());
             }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionSalir()
+        public void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-
+            if (_transicion != null)
+            {
+                maquina.StopCoroutine(ref _transicion);
+            }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionTrasSalir()
+        public void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
 
         }
@@ -501,8 +515,7 @@ namespace Sui.Machine
 
         public int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            int _indice_i = maquina.GetIndex(this);
-            Index = _indice_i;
+            _indice_i = maquina.GetIndex(this);
             return _indice_i;
         }
 
