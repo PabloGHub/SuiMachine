@@ -18,8 +18,11 @@ namespace Sui.Machine
         bool Active { get; }
 
         // ***********************( Gestion y Control )*********************** //
+        int Identificador { get; set; }
         int Id { get; }
         bool InFirstEnter { get; }
+
+        bool enabled { get; set;  }
 
         // ***********************( Eventos )*********************** //
         event Action OnFirtsEnter;
@@ -32,6 +35,8 @@ namespace Sui.Machine
         // ***********************( Control de direccion )*********************** //
         void OnEnterFrom<S>(Action _fun) where S : IState;
         void OnEnterFrom(Type _tipo, Action _fun);
+
+        void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour;
 
         void Enter();
         void Exit();
@@ -60,6 +65,104 @@ namespace Sui.Machine
     }
 
     // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
+    public abstract class Base_StateBase_Little : IState
+    {
+        public MonoBehaviour Source { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int Index { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public Component ThisComponent { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public bool Active => throw new NotImplementedException();
+
+        public int Id => throw new NotImplementedException();
+
+        public bool InFirstEnter => throw new NotImplementedException();
+
+        public int Identificador { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public event Action OnFirtsEnter;
+        public event Action<int> OnChangeId;
+
+        public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            throw new NotImplementedException();
+        }
+
+        public Base_StateBase_Little()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DestroyThis()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Enter()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Exit()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool F_CambioEnter_b<S>(S eEstado) where S : IState
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool F_CambioExit_b<S>(S eEstado) where S : IState
+        {
+            throw new NotImplementedException();
+        }
+
+        public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            throw new NotImplementedException();
+        }
+
+        public void GestionSalir()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void GestionTrasEntrar()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void GestionTrasSalir()
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Init<T>(T source)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnEnterFrom<S>(Action _fun) where S : IState
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnEnterFrom(Type _tipo, Action _fun)
+        {
+            throw new NotImplementedException();
+        }
+    }
 
     public abstract class Base_StateBase : MonoBehaviour, IState
     {
@@ -118,7 +221,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal int Identificador
+        public int Identificador
         {
             get
             {
@@ -418,13 +521,13 @@ namespace Sui.Machine
         
     }
 
-    /*public abstract class LittleStateBase : Base_StateBase_Little
+    public class LittleStateBase : Base_StateBase_Little
     {
         public LittleStateBase()
         {
             throw new NotImplementedException();
         }
-    }*/
+    }
 
     // ***********************( Atributos )*********************** //
     // En cuanto Unity Admita C# 11 Pasar a valores genericos.

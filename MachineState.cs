@@ -9,7 +9,7 @@ namespace Sui.Machine
 {
     interface IMachineState
     {
-        public Base_StateBase State { get; set; }
+        public IState State { get; set; }
         public int Count { get; }
         //private readonly int _identificador_i;
 
@@ -50,7 +50,7 @@ namespace Sui.Machine
     {
         // ***********************( ListState )*********************** //
         // TODO: sacar al namespace para que cualquiero pueda usarlo y asegurar que no haya problemas al hacerlo.
-        private class ListState : List<Base_StateBase>
+        private class ListState : List<IState>
         {
             private readonly MachineState<O> _machineState;
 
@@ -60,7 +60,7 @@ namespace Sui.Machine
                 _machineState = machineState;
             }
 
-            public ListState(MachineState<O> machineState, IEnumerable<Base_StateBase> collection) : base(collection)
+            public ListState(MachineState<O> machineState, IEnumerable<IState> collection) : base(collection)
             {
                 _machineState = machineState;
                 foreach (var item in collection)
@@ -70,11 +70,11 @@ namespace Sui.Machine
             }
 
             // Getters y Setters.
-            public IEnumerable<Base_StateBase> Asignacion
+            public IEnumerable<IState> Asignacion
             {
                 get
                 {
-                    return new List<Base_StateBase>(this);
+                    return new List<IState>(this);
                 }
                 set
                 {
@@ -92,14 +92,14 @@ namespace Sui.Machine
             }
 
             // Metodos.
-            public new void Add(Base_StateBase item)
+            public new void Add(IState item)
             {
                 base.Add(item);
                 _machineState?.GestionarEstado(item);
                 item.AlEntrarEstadosPosibles(_machineState);
             }
 
-            public new void AddRange(IEnumerable<Base_StateBase> collection)
+            public new void AddRange(IEnumerable<IState> collection)
             {
                 foreach (var item in collection)
                 {
@@ -109,12 +109,12 @@ namespace Sui.Machine
         }
 
         // ***********************( Variables/Declaraciones )*********************** //
-        private Base_StateBase _estadoActual { get; set; } = null; // Representa el estado actual de la maquina.
+        private IState _estadoActual { get; set; } = null; // Representa el estado actual de la maquina.
 
         private ListState _estadosPosibles { get; set; }
         private ListState _estadosPersistentes;
 
-        private Dictionary<Func<bool>, Base_StateBase> _transiciones = new();
+        private Dictionary<Func<bool>, IState> _transiciones = new();
         private GameObject _go;
         private O _source_O; // Script donde fue instanciada la maquina de estados.
         private GestionadorMachineState _gestionador_obj;
@@ -128,7 +128,7 @@ namespace Sui.Machine
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         // TODO: Si llega un State desconocido, que se cree automaticamente y se añada a la lista de estados posibles.
-        public Base_StateBase State
+        public IState State
         {
             get
             {
@@ -177,7 +177,7 @@ namespace Sui.Machine
         /// </summary>
         /// <param name="_indice_i"></param>
         /// <returns></returns>
-        public Base_StateBase this[int _indice_i]
+        public IState this[int _indice_i]
         {
             get
             {
@@ -205,7 +205,7 @@ namespace Sui.Machine
         /// </summary>
         /// <param name="_estado"></param>
         /// <returns></returns>
-        public int this[Base_StateBase _estado]
+        public int this[IState _estado]
         {
             get
             {
@@ -231,7 +231,7 @@ namespace Sui.Machine
         /// get: Devuelve la lista de estados posibles.<br />
         /// set: Sustituye la lista de estados posibles.<br />
         /// </summary>
-        public List<Base_StateBase> PossibleStates
+        public List<IState> PossibleStates
         {
             get
             {
@@ -262,7 +262,7 @@ namespace Sui.Machine
         /// get: Devuelve la lista de estados posibles.<br />
         /// set: Sustituye la lista de estados posibles.<br />
         /// </summary>
-        public List<Base_StateBase> this[List<Base_StateBase> _estadosPosibles_obj]
+        public List<IState> this[List<IState> _estadosPosibles_obj]
         {
             get
             {
@@ -349,7 +349,7 @@ namespace Sui.Machine
 
 
         // ***********************( Eventos )*********************** //
-        public event Action<Base_StateBase> OnStateChanged;
+        public event Action<IState> OnStateChanged;
 
 
 
@@ -361,7 +361,7 @@ namespace Sui.Machine
         /// Changes the current state of the state machine.<br />
         /// </summary>
         /// <param name="_nuevoEstado_i">Es: Posicion en int del 'estadosPosibles' <br /> En: Position in int of 'PossibleStates'</param>
-        public Base_StateBase ChangeState(int _nuevoEstado_i)
+        public IState ChangeState(int _nuevoEstado_i)
         {
             if (!cambiarEstado(_nuevoEstado_i, out var _novoState_obj))
                 return null;
@@ -378,7 +378,7 @@ namespace Sui.Machine
         /// </summary>
         /// <param name="_novoEstado_s">Es: nombre del estado <br />En: name of state</param>
         /// <returns>Es: Retorna el nuevo estado cambiado <br />En: Returns the new changed state</returns>
-        public Base_StateBase ChangeState(string _novoEstado_s)
+        public IState ChangeState(string _novoEstado_s)
         {
             if (string.IsNullOrEmpty(_novoEstado_s))
             {
@@ -399,7 +399,7 @@ namespace Sui.Machine
         /// </summary>
         /// <returns>Es: Retorna el nuevo estado cambiado <br />En: Returns the new changed state</returns>
         /// <typeparam name="T">Es: Tipo del estado a cambiar <br />En: Type of the state to change</typeparam>
-        public Base_StateBase ChangeState<T>()
+        public IState ChangeState<T>()
         {
             return ChangeState(GetIndex(typeof(T).Name));
         }
@@ -411,7 +411,7 @@ namespace Sui.Machine
         /// <param name="_nuevoEstado_i">'int' del estado a cambiar</param>
         /// <param name="_salida">nuevo estado al cambiado</param>
         /// <returns>false si no llego a cambiar</returns>
-        private bool cambiarEstado(int _nuevoEstado_i, out Base_StateBase _salida)
+        private bool cambiarEstado(int _nuevoEstado_i, out IState _salida)
         {
             _salida = null;
 
@@ -424,7 +424,7 @@ namespace Sui.Machine
                 return false;
             }
 
-            Base_StateBase _posibleNovoEstado = _estadosPosibles[_nuevoEstado_i];
+            IState _posibleNovoEstado = _estadosPosibles[_nuevoEstado_i];
             if (_posibleNovoEstado == null)
             {
                 Debug.LogError($"({_go.name}->MachineState -> (internal)ChangeState): Attempt to change state null");
@@ -441,7 +441,7 @@ namespace Sui.Machine
             return true;
         }
 
-        internal void GestionarEstado(Base_StateBase e_estado)
+        internal void GestionarEstado(IState e_estado)
         {
             if (e_estado != null)
             {
@@ -454,7 +454,7 @@ namespace Sui.Machine
 
 
         // NOTA: no se si dejarlo pues hace lo mismo que 'PosibleStates'.
-        public List<Base_StateBase> ChangeListSates(List<Base_StateBase> _novoLista)
+        public List<IState> ChangeListSates(List<IState> _novoLista)
         {
             if (_novoLista == null)
             {
@@ -478,7 +478,7 @@ namespace Sui.Machine
         /// <summary>
         /// En Proceso de Fabricacion.
         /// </summary>
-        public async Task CambiarEstadoAsync(Base_StateBase nuevoEstado)
+        public async Task CambiarEstadoAsync(IState nuevoEstado)
         {
             if (State != null)
             {
@@ -497,7 +497,7 @@ namespace Sui.Machine
         /// <summary>
         /// En Proceso de Fabricacion.
         /// </summary>
-        public void AgregarEstadoPersistente(Base_StateBase estado)
+        public void AgregarEstadoPersistente(IState estado)
         {
             if (!_estadosPersistentes.Contains(estado))
             {
@@ -511,7 +511,7 @@ namespace Sui.Machine
         /// <summary>
         /// En Proceso de Fabricacion.
         /// </summary>
-        public void RemoverEstadoPersistente(Base_StateBase estado)
+        public void RemoverEstadoPersistente(IState estado)
         {
             if (_estadosPersistentes.Contains(estado))
             {
@@ -537,7 +537,7 @@ namespace Sui.Machine
 
 
         // ***********************( Metodos Limpieza Estados )*********************** //
-        public void ClearImmediate(List<Base_StateBase> _excluidosEspecificos = null)
+        public void ClearImmediate(List<IState> _excluidosEspecificos = null)
         {
             List<int> _idesExluidos = new();
             if (_excluidosEspecificos != null)
@@ -555,7 +555,7 @@ namespace Sui.Machine
                     _idesExluidos.Add(_estadoIndividual.Identificador);
             }
 
-            Base_StateBase[] _todosEstados = _go.GetComponents<Base_StateBase>();
+            IState[] _todosEstados = _go.GetComponents<IState>();
             foreach (var _estadoIndividual in _todosEstados)
             {
                 if (
@@ -574,7 +574,7 @@ namespace Sui.Machine
         /// En Proceso de Fabricacion.
         /// </summary>
         /// <param name="_excluidosEspecificos"></param>
-        public void Clear(List<Base_StateBase> _excluidosEspecificos = null)
+        public void Clear(List<IState> _excluidosEspecificos = null)
         {
             List<int> _idesExluidos = new();
             if (_excluidosEspecificos != null)
@@ -598,7 +598,7 @@ namespace Sui.Machine
         /// <summary>
         /// En Proceso de Fabricacion.
         /// </summary>
-        public void Rm(List<Base_StateBase> _listaBorrar)
+        public void Rm(List<IState> _listaBorrar)
         {
             // TODO: Borrar una lista de estados.
         }
@@ -606,7 +606,7 @@ namespace Sui.Machine
         /// <summary>
         /// En Proceso de Fabricacion.
         /// </summary>
-        public void Rm(Base_StateBase _estadoBorrar)
+        public void Rm(IState _estadoBorrar)
         {
             // TODO: Borrar un estado.
         }
@@ -677,7 +677,7 @@ namespace Sui.Machine
         /// </summary>
         /// <param name="estado">Es: Estado del que se quiere sacar el indice <br /> En: State from which to get the index</param>
         /// <returns>Retona un int del indice</returns>
-        public int GetIndex(Base_StateBase estado)
+        public int GetIndex(IState estado)
         {
             if (estado == null)
             {
@@ -726,7 +726,7 @@ namespace Sui.Machine
         /// <summary>
         /// En proceso de fabricacion.
         /// </summary>
-        public Base_StateBase GetState(int _indice_i)
+        public IState GetState(int _indice_i)
         {
             return null;
         }
@@ -753,24 +753,24 @@ namespace Sui.Machine
         /// Importante: No añade a los estados posibles, Tendra que añadilos usted manualmente.<br />
         /// si quiero añadirlo automaticamente utilice 'CreateStateAutoAdd'.<br />
         /// </summary>
-        /// <typeparam name="T">Estado que se quiera craer</typeparam>
+        /// <typeparam name="S">Estado que se quiera craer</typeparam>
         /// <returns>Es: Retorna el nuevo estado desactivado.</returns>
-        public T CreateState<T>() where T : Base_StateBase
+        public S CreateState<S>() where S : IState
         {
-            return f_crearEstado_T<T>();
+            return f_crearEstado_T<S>();
         }
 
-        public static T CreateState<T>(GameObject e_go, O e_source_O, MachineState<O> e_ms) where T : Base_StateBase
-        {
-            T estado = e_go.AddComponent<T>();
-            estado.enabled = false;
-            //estado.Identificador = f_solicitarIde_i();
-            estado.Source = e_source_O;
-            estado.ConstructorGestion(e_ms);
-            estado.Init(e_source_O);
+        //public static T CreateState<T>(GameObject e_go, O e_source_O, MachineState<O> e_ms) where T : IState
+        //{
+        //    T estado = e_go.AddComponent<T>();
+        //    estado.enabled = false;
+        //    //estado.Identificador = f_solicitarIde_i();
+        //    estado.Source = e_source_O;
+        //    estado.ConstructorGestion(e_ms);
+        //    estado.Init(e_source_O);
 
-            return estado;
-        }
+        //    return estado;
+        //}
 
         /// <summary>
         /// ___________________( Español )___________________<br />
@@ -779,10 +779,10 @@ namespace Sui.Machine
         /// -----------------<br />
         /// Importante: Añade automaticamente a los estados posibles.<br />
         /// </summary>
-        /// <typeparam name="T">Estado que se quiera craer</typeparam>
-        public void CreateStateAutoAdd<T>() where T : Base_StateBase
+        /// <typeparam name="S">Estado que se quiera craer</typeparam>
+        public void CreateStateAutoAdd<S>() where S : IState
         {
-            T novoEstado = f_crearEstado_T<T>();
+            S novoEstado = f_crearEstado_T<S>();
 
             novoEstado.Identificador = f_solicitarIde_i();
 
@@ -794,9 +794,36 @@ namespace Sui.Machine
 
         // TODO: Descubrir porque en medio del porceso salta un warging proveniente de GetIndex.
         // Porque llama a GetIndex (en ConstructorGestion) antes de añadirlo a estados posibles.
-        private T f_crearEstado_T<T>() where T : Base_StateBase
+        private S f_crearEstado_T<S>() where S : IState
         {
-            T estado = _go.AddComponent<T>();
+            S estado; 
+             
+            // Comprobar si S es un MonoBehaviour.
+            if (typeof(MonoBehaviour).IsAssignableFrom(typeof(S)))
+            {
+                // S es un MonoBehaviour, así que podemos usar AddComponent con reflexión
+                var component = _go.AddComponent(typeof(S));
+                if (component is S sComponent)
+                {
+                    estado = sComponent;
+                }
+                else
+                {
+                    throw new InvalidCastException($"No se puede convertir el componente de tipo '{component.GetType().Name}' a '{typeof(S).Name}'.");
+                }
+            }
+            else
+            {
+                // S no es un MonoBehaviour, instancia LittleStateBase (o lanza excepción si no es compatible)
+                if (typeof(S).IsAssignableFrom(typeof(LittleStateBase)))
+                    estado = (S)(object)new LittleStateBase();
+                else
+                    throw new InvalidOperationException($"El tipo {typeof(S).Name} no es un MonoBehaviour ni LittleStateBase.");
+            }
+
+            //var newEstado = (S is MonoBehaviour e) ? _go.AddComponent<S>() : new LittleStateBase();
+
+            //S estado = _go.AddComponent<S>();
             estado.enabled = false;
             //estado.MachineState = this;
             //estado.Identificador = f_solicitarIde_i();
@@ -808,9 +835,9 @@ namespace Sui.Machine
         }
 
         // ***********************( Constructores )*********************** //
-        public MachineState(GameObject goHost, List<Base_StateBase> estadosPosibles, O _source_O)
+        public MachineState(GameObject goHost, List<IState> estadosPosibles, O _source_O)
         {
-            PossibleStates = estadosPosibles ?? new List<Base_StateBase>();
+            PossibleStates = estadosPosibles ?? new List<IState>();
 
             inicializar(goHost, _source_O);
         }
