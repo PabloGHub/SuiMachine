@@ -110,8 +110,6 @@ namespace Sui.Machine
         private Base_StateBase _estadoActual { get; set; } = null; // Representa el estado actual de la maquina.
 
         private ListState _estadosPosibles { get; set; }
-        [Obsolete("GetIndex ya recorre los estados posibles")]
-        private Dictionary<string, int> _nombresEstados = new();
         private ListState _estadosPersistentes;
 
         private Dictionary<Func<bool>, Base_StateBase> _transiciones = new();
@@ -441,59 +439,6 @@ namespace Sui.Machine
             return true;
         }
 
-        [Obsolete]
-        public List<string> GenerateNamesStates()
-        {
-            _nombresEstados.Clear();
-            foreach (var _estadoIndividual in _estadosPosibles)
-            {
-                string _nombreEstado_s = _estadoIndividual.GetType().Name;
-                if (!_nombresEstados.ContainsKey(_nombreEstado_s))
-                    _nombresEstados.Add(_nombreEstado_s, GetIndex(_estadoIndividual));
-            }
-            return new List<string>(NamesStates);
-        }
-        [Obsolete]
-        private List<string> generarNombresEstado(List<Base_StateBase> value)
-        {
-            _nombresEstados.Clear();
-            foreach (var _estadoIndividual in value)
-            {
-                string _nombreEstado_s = _estadoIndividual.GetType().Name;
-                if (!_nombresEstados.ContainsKey(_nombreEstado_s))
-                    _nombresEstados.Add(_nombreEstado_s, GetIndex(_estadoIndividual));
-            }
-            return new List<string>(NamesStates);
-        }
-
-        [Obsolete("Para eso esta ListState")]
-        private void annadirEstadosTodos(List<Base_StateBase> value)
-        {
-            foreach (var _estadoIndividual in value)
-            {
-                if (!_todosEstados.Contains(_estadoIndividual.Identificador))
-                    _todosEstados.Add(_estadoIndividual.Identificador);
-            }
-        }
-
-        [Obsolete]
-        private List<string> f_generarYannadirEstadosTodos_List_s(List<Base_StateBase> value)
-        {
-            _nombresEstados.Clear();
-            foreach (var _estadoIndividual in value)
-            {
-                string _nombreEstado_s = _estadoIndividual.GetType().Name;
-                if (!_nombresEstados.ContainsKey(_nombreEstado_s))
-                    _nombresEstados.Add(_nombreEstado_s, GetIndex(_estadoIndividual));
-
-                if (!_todosEstados.Contains(_estadoIndividual.Identificador))
-                    _todosEstados.Add(_estadoIndividual.Identificador);
-            }
-            return new List<string>(NamesStates);
-        }
-
-
-
         internal void GestionarEstado(Base_StateBase e_estado)
         {
             if (e_estado != null)
@@ -774,26 +719,6 @@ namespace Sui.Machine
 
             Debug.LogWarning($"({_go.name}->MachineState): The state {nombreParaIndex} not found on the list of states.");
             return -1;
-        }
-
-        [Obsolete]
-        public int GetIndexObsoleto(string nombreEstado)
-        {
-            if (string.IsNullOrEmpty(nombreEstado))
-            {
-                Debug.LogError($"({_go.name}->MachineState): El nombre del estado proporcionado es nulo o vacío.");
-                return -1;
-            }
-            GenerateNamesStates();
-            if (_nombresEstados.TryGetValue(nombreEstado, out int indice))
-            {
-                return indice;
-            }
-            else
-            {
-                Debug.LogWarning($"({_go.name}->MachineState): El estado {nombreEstado} no se encuentra en la lista de nombres de estados.");
-                return -1;
-            }
         }
 
         /// <summary>
