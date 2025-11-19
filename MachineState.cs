@@ -29,6 +29,8 @@ namespace Sui.Machine
 
     // TODO: Gestionar de alguna manera cuando cualquiera haga .Add sobre _estadosPosibles.
 
+    // TODO: ver si es viable cambiar el tipo de <O> a IState.
+
     /*
         // Problema: llama al Add de List en vez de ListState.
         var _estadoMoviendose = machineState.CreateState<EstadoMoviendose>();
@@ -143,7 +145,7 @@ namespace Sui.Machine
                 if (_estadoActual != null)
                 {
                     _estadoActual.GestionSalir();
-                    if (!_estadoActual.f_CambioExit_b(value)) { _estadoActual.Exit(); }
+                    if (!_estadoActual.F_CambioExit_b(value)) { _estadoActual.Exit(); }
                     _estadoActual.GestionTrasSalir();
 
                     _estadoActual.enabled = false;
@@ -161,7 +163,7 @@ namespace Sui.Machine
                 OnStateChanged?.Invoke(_estadoActual);
 
                 _estadoActual.GestionEntrar(this);
-                if (!_estadoActual.f_CambioEnter_b(_estadoAnterior)) { _estadoActual.Enter(); }
+                if (!_estadoActual.F_CambioEnter_b(_estadoAnterior)) { _estadoActual.Enter(); }
                 _estadoActual.GestionTrasEntrar();
 
                 ActualizarTransiciones();
@@ -563,7 +565,7 @@ namespace Sui.Machine
                     )
                 {
                     _estadoIndividual.enabled = false;
-                    _estadoIndividual.destroyThis();
+                    _estadoIndividual.DestroyThis();
                 }
             }
         }

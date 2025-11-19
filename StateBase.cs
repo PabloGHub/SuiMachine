@@ -8,10 +8,45 @@ namespace Sui.Machine
 {
     public interface IState
     {
+        // ***********************( Getter, Setters e Indesxadores )*********************** //
+        MonoBehaviour Source { get; set; }
+
+        O GetSource<O>() where O : MonoBehaviour => Source as O;
+
+        int Index { get; set; }
+        Component ThisComponent { get; set; }
+        bool Active { get; }
+
+        // ***********************( Gestion y Control )*********************** //
+        int Id { get; }
+        bool InFirstEnter { get; }
+
+        // ***********************( Eventos )*********************** //
+        event Action OnFirtsEnter;
+        event Action<int> OnChangeId;
+
+        // ***********************( Contructores )*********************** //
+        void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour;
+        void Init<T>(T source);
+
+        // ***********************( Control de direccion )*********************** //
+        void OnEnterFrom<S>(Action _fun) where S : IState;
+        void OnEnterFrom(Type _tipo, Action _fun);
+
         void Enter();
         void Exit();
 
-        void Init<T>(T source);
+        // ***********************( Metodos de Control )*********************** //
+        void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour;
+        void GestionTrasEntrar();
+        void GestionSalir();
+        void GestionTrasSalir();
+
+        // ***********************( Metodos Funcionales )*********************** //
+        bool F_CambioEnter_b<S>(S eEstado) where S : IState;
+        bool F_CambioExit_b<S>(S eEstado) where S : IState;
+        int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour;
+        void DestroyThis();
     }
 
     public interface ITransitionState
@@ -59,9 +94,9 @@ namespace Sui.Machine
         /// <summary>
         /// En proceso de fabricacion.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="O"></typeparam>
         /// <returns></returns>
-        public T GetSource<T>() where T : MonoBehaviour => Source as T;
+        public O GetSource<O>() where O : MonoBehaviour => Source as O;
         public int Index
         {
             get => _indice_i;
@@ -103,30 +138,30 @@ namespace Sui.Machine
             }
         }
 
-        // Obsoleto: Puedes llamar a Start() de Unity.
-        //private bool _primeraVez_bandera = true;
-        //internal bool EntrarPrimeraVez
-        //{
-        //    get
-        //    {
-        //        _primeraVez_bandera = false;
-        //        return _primeraVez_bandera;
-        //    }
-        //    set
-        //    {
-        //        Debug.LogWarning($"({gameObject.name}:StateBase): 'InFirstEnter' -> {value}, Warning.");
-        //        _primeraVez_bandera = value;
-        //    }
-        //}
-        //public bool InFirstEnter
-        //{
-        //    get { return _primeraVez_bandera; }
-        //}
+        // Obsoleto: Puedes llamar a Start() de Unity, Pero tu te fias? porque yo no.
+        private bool _primeraVez_bandera = true;
+        internal bool EntrarPrimeraVez
+        {
+            get
+            {
+                _primeraVez_bandera = false;
+                return _primeraVez_bandera;
+            }
+            set
+            {
+                Debug.LogWarning($"({gameObject.name}:StateBase): 'InFirstEnter' -> {value}, Warning.");
+                _primeraVez_bandera = value;
+            }
+        }
+        public bool InFirstEnter
+        {
+            get { return _primeraVez_bandera; }
+        }
 
 
 
         // ***********************( Eventos )*********************** //
-        //public event Action OnFirtsEnter;
+        public event Action OnFirtsEnter;
         public event Action<int> OnChangeId;
 
 
@@ -134,7 +169,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             // Deberia funcionar pero hay que testealo pues tengo malas experiencias.
             this.ThisComponent = this.GetComponent(this.GetType());
@@ -167,7 +202,7 @@ namespace Sui.Machine
                 }
             }
         }
-        public virtual void Init<T>(T source) { }
+        public virtual void Init<O>(O source) { }
 
 
         // ***********************( Control de direccion )*********************** //
@@ -185,9 +220,9 @@ namespace Sui.Machine
         /// -----------------------<br />
         /// Note: You can only have one function per state.
         /// </summary>
-        public void OnEnterFrom<T>(Action _fun) where T : StateBase
+        public void OnEnterFrom<S>(Action _fun) where S : IState
         {
-            _entrarDesde[typeof(T)] = _fun;
+            _entrarDesde[typeof(S)] = _fun;
         }
         public void OnEnterFrom(Type _tipo, Action _fun)
         {
@@ -203,9 +238,9 @@ namespace Sui.Machine
         /// -La funcion con la clabe a T se ejecutara.
         /// <br />-----------------------
         /// </summary>
-        public void OnExitTo<T>(Action _fun) where T : StateBase
+        public void OnExitTo<S>(Action _fun) where S : IState
         {
-            _salirDesde[typeof(T)] = _fun;
+            _salirDesde[typeof(S)] = _fun;
         }
         public void OnExitTo(Type _tipo, Action _fun)
         {
@@ -217,51 +252,46 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             ThisComponent = GetComponent(GetType());
             GetIndex(maquina);
+        }
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
+        public void GestionTrasEntrar()
+        {
+            if (EntrarPrimeraVez)
+                OnFirtsEnter?.Invoke();
 
-            StateBase _estado = Transition();
-            if (_estado != null)
+            if (this is ITransitionIndexState estadoIndex)
             {
-                maquina.ChangeState(maquina[_estado]);
+                
             }
-            else
+            else if (this is ITransitionState estadoState)
             {
-                int _indice_i = TransitionIndex();
-                if (_indice_i >= 0)
-                {
-                    maquina.ChangeState(_indice_i);
-                }
+
             }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal void GestionTrasEntrar()
-        {
-            //if (EntrarPrimeraVez)
-            //    OnFirtsEnter?.Invoke();
-        }
-        /// <summary>
-        /// If you are not the MachinState developer, NEVER use anything in Spanish.
-        /// </summary>
-        internal void GestionSalir()
+        public void GestionSalir()
         {
 
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal void GestionTrasSalir()
+        public void GestionTrasSalir()
         {
 
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        internal void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             GetIndex(maquina);
         }
@@ -287,15 +317,6 @@ namespace Sui.Machine
         /// - It is called before OnDisable().<br />
         /// </summary>
         public abstract void Exit();
-
-        public virtual StateBase Transition()
-        {
-            return null;
-        }
-        public virtual int TransitionIndex()
-        {
-            return -1;
-        }
 
         /*
         /// <summary>
@@ -326,9 +347,9 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// Si entra al estado desde uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        internal bool f_CambioEnter_b<T>(T _estado_T)
+        public bool F_CambioEnter_b<S>(S eEstado) where S : IState
         {
-            if (_estado_T == null)
+            if (eEstado == null)
             {
                 Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
@@ -339,7 +360,7 @@ namespace Sui.Machine
 
             foreach (var item in _entrarDesde)
             {
-                if (item.Key.GetType() == _estado_T.GetType())
+                if (item.Key.GetType() == eEstado.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -352,9 +373,9 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        internal bool f_CambioExit_b<T>(T _estado_T)
+        public bool F_CambioExit_b<S>(S eEstado) where S : IState
         {
-            if (_estado_T == null)
+            if (eEstado == null)
             {
                 Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
@@ -365,7 +386,7 @@ namespace Sui.Machine
 
             foreach (var item in _salirDesde)
             {
-                if (item.Key.GetType() == _estado_T.GetType())
+                if (item.Key.GetType() == eEstado.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -375,7 +396,7 @@ namespace Sui.Machine
             return false;
         }
 
-        int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             int _indice_i = maquina.GetIndex(this);
             Index = _indice_i;
@@ -386,7 +407,7 @@ namespace Sui.Machine
         /// <summary>
         /// Try, to see what he does. :)
         /// </summary>
-        internal void destroyThis()
+        public void DestroyThis()
         {
             Destroy(this);
         }
