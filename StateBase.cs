@@ -6,7 +6,27 @@ using System.Linq;
 
 namespace Sui.Machine
 {
-    public abstract class StateBase : MonoBehaviour
+    public interface IState
+    {
+        void Enter();
+        void Exit();
+
+        void Init<T>(T source);
+    }
+
+    public interface ITransitionState
+    {
+        Base_StateBase Transition();
+    }
+
+    public interface ITransitionIndexState
+    {
+        int Transition();
+    }
+
+    // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
+
+    public abstract class Base_StateBase : MonoBehaviour, IState
     {
         // ***********************( Variables/Declaraciones )*********************** //
         private MonoBehaviour _source { get; set; } = null;
@@ -35,7 +55,7 @@ namespace Sui.Machine
         private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
         private Dictionary<Type, Action> _salirDesde { get; set; } = new();
 
-        // ***********************( Getter y Setters )*********************** //
+        // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
         /// En proceso de fabricacion.
         /// </summary>
@@ -236,7 +256,7 @@ namespace Sui.Machine
         /// </summary>
         internal void GestionTrasSalir()
         {
-            
+
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
@@ -277,7 +297,7 @@ namespace Sui.Machine
             return -1;
         }
 
-
+        /*
         /// <summary>
         /// En_proceso.
         /// </summary>
@@ -296,56 +316,10 @@ namespace Sui.Machine
             Exit();
             return Task.CompletedTask;
         }
-
+        */
 
         // ***********************( Mi Unity )*********************** //
-        //public virtual void MiAwake() { }
-        //public virtual void MiOnEnable() { }
-        //public virtual void MiStart() { }
-        //public virtual void MiFixedUpdate() { }
-        //public virtual void MiUpdate() { }
-        //public virtual void MiLateUpdate() { }
-        //public virtual void MiOnDisable() { }
-        //public virtual void MiOnDestroy() { }
-
-
-
-
-
         // ***********************( Unity -> Mi )*********************** //
-        //private void Awake()
-        //{
-        //    MiAwake();
-        //}
-        //private void OnEnable()
-        //{
-        //    MiOnEnable();
-        //}
-        //private void Start()
-        //{
-        //    MiStart();
-        //}
-        //private void FixedUpdate()
-        //{
-        //    MiFixedUpdate();
-        //}
-        //private void Update()
-        //{
-        //    MiUpdate();
-        //}
-        //private void LateUpdate()
-        //{
-        //    MiLateUpdate();
-        //}
-        //private void OnDisable()
-        //{
-        //    MiOnDisable();
-        //}
-        //private void OnDestroy()
-        //{
-        //    MiOnDestroy();
-        //}
-
 
         // ***********************( Metodos Funcionales )*********************** //
         /// <summary>
@@ -418,10 +392,23 @@ namespace Sui.Machine
         }
     }
 
+    public abstract class StateBase : Base_StateBase
+    {
+        
+    }
+
+    /*public abstract class LittleStateBase : Base_StateBase_Little
+    {
+        public LittleStateBase()
+        {
+            throw new NotImplementedException();
+        }
+    }*/
 
     // ***********************( Atributos )*********************** //
     // En cuanto Unity Admita C# 11 Pasar a valores genericos.
     // TODO: Recordar como se hacia eso, recuerdo que era para evitar el uso de typeof.
+
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class OnEnterFromAttribute : Attribute
     {
