@@ -76,8 +76,8 @@ namespace Sui.Machine
     // Puto Unity.
     public abstract class Intemediario_Little : IStateLittle
     {
-        public abstract void Update();
-        public abstract void FixedUpdate();
+        public virtual void Update() { }
+        public virtual void FixedUpdate() { }
     }
 
     // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
