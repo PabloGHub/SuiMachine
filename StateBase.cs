@@ -23,7 +23,7 @@ namespace Sui.Machine
         int Id { get; }
         bool InFirstEnter { get; }
 
-        bool enabled { get; set;  }
+        bool enabled { get; set; }
 
         // ***********************( Eventos )*********************** //
         event Action OnFirtsEnter;
@@ -80,8 +80,6 @@ namespace Sui.Machine
         public virtual void FixedUpdate() { }
     }
 
-
-    // public bool enabled { get; set; } = true;
     // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
     public abstract class Base_StateBase_Little : Intemediario_Little, IState
     {
@@ -234,14 +232,14 @@ namespace Sui.Machine
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Solo se llamara a la funcion cuando el estado anterior es igual al valor.<br />
-        /// -Si el estado anterior a este es T.<br />
-        /// -La funcion con la clabe a T se ejecutara.<br />
+        /// -Si el estado anterior a este es S.<br />
+        /// -La funcion con la clabe a S se ejecutara.<br />
         /// -----------------------<br />
         /// Nota: Solo puedes tener una funcion por estado entrante.<br />
         /// ___________________( English )___________________<br />
         /// Only the function will be called when the previous state is equal to the value.<br />
-        /// -If the previous state to this is T.<br />
-        /// -The function with the key to T will be executed.<br />
+        /// -If the previous state to this is S.<br />
+        /// -The function with the key to S will be executed.<br />
         /// -----------------------<br />
         /// Note: You can only have one function per enter state.
         /// </summary>
@@ -259,8 +257,8 @@ namespace Sui.Machine
         /// ___________________( Español )___________________<br />
         /// Solo se llamara a la funcion cuando el estado siguiente es igual al valor.
         /// <br />-----------------------<br />
-        /// -Si el siguiente estado a este es T.<br />
-        /// -La funcion con la clabe a T se ejecutara.
+        /// -Si el siguiente estado a este es S.<br />
+        /// -La funcion con la clabe a S se ejecutara.
         /// <br />-----------------------
         /// </summary>
         public void OnExitTo<S>(Action _fun) where S : IState
@@ -393,7 +391,7 @@ namespace Sui.Machine
 
             foreach (var item in _entrarDesde)
             {
-                if (item.Key.GetType() == eEstado.GetType())
+                if (item.Key == eEstado.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -419,7 +417,7 @@ namespace Sui.Machine
 
             foreach (var item in _salirDesde)
             {
-                if (item.Key.GetType() == eEstado.GetType())
+                if (item.Key == eEstado.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -588,14 +586,14 @@ namespace Sui.Machine
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Solo se llamara a la funcion cuando el estado anterior es igual al valor.<br />
-        /// -Si el estado anterior a este es T.<br />
-        /// -La funcion con la clabe a T se ejecutara.<br />
+        /// -Si el estado anterior a este es S.<br />
+        /// -La funcion con la clabe a S se ejecutara.<br />
         /// -----------------------<br />
         /// Nota: Solo puedes tener una funcion por estado entrante.<br />
         /// ___________________( English )___________________<br />
         /// Only the function will be called when the previous state is equal to the value.<br />
-        /// -If the previous state to this is T.<br />
-        /// -The function with the key to T will be executed.<br />
+        /// -If the previous state to this is S.<br />
+        /// -The function with the key to S will be executed.<br />
         /// -----------------------<br />
         /// Note: You can only have one function per enter state.
         /// </summary>
@@ -613,8 +611,8 @@ namespace Sui.Machine
         /// ___________________( Español )___________________<br />
         /// Solo se llamara a la funcion cuando el estado siguiente es igual al valor.
         /// <br />-----------------------<br />
-        /// -Si el siguiente estado a este es T.<br />
-        /// -La funcion con la clabe a T se ejecutara.
+        /// -Si el siguiente estado a este es S.<br />
+        /// -La funcion con la clabe a S se ejecutara.
         /// <br />-----------------------
         /// </summary>
         public void OnExitTo<S>(Action _fun) where S : IState
@@ -748,7 +746,7 @@ namespace Sui.Machine
 
             foreach (var item in _entrarDesde)
             {
-                if (item.Key.GetType() == eEstado.GetType())
+                if (item.Key == eEstado.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -774,7 +772,7 @@ namespace Sui.Machine
 
             foreach (var item in _salirDesde)
             {
-                if (item.Key.GetType() == eEstado.GetType())
+                if (item.Key == eEstado.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -802,13 +800,10 @@ namespace Sui.Machine
 
     public abstract class StateBase : Base_StateBase
     {
-        
     }
 
     public abstract class LittleStateBase : Base_StateBase_Little
     {
-        public LittleStateBase()
-        { }
     }
 
     // ***********************( Atributos )*********************** //

@@ -606,7 +606,7 @@ namespace Sui.Machine
                 if (
                     !_idesExluidos.Contains(_estadoIndividual.Identificador) &&
                     _estadoIndividual != null// &&
-                    //_estadoIndividual.MachineState == this
+                                             //_estadoIndividual.MachineState == this
                     )
                 {
                     limpiarUnEstado(_estadoIndividual);
@@ -767,9 +767,9 @@ namespace Sui.Machine
             return -1;
         }
 
-         public int GetIndex<T>()
+        public int GetIndex<S>()
         {
-            return GetIndex(typeof(T).Name);
+            return GetIndex(typeof(S).Name);
         }
 
         /// <summary>
@@ -796,7 +796,7 @@ namespace Sui.Machine
         // ***********************( Funciones Constructores )*********************** //
         /// <summary>
         /// ___________________( Español )___________________<br />
-        /// Crea un nuevo estado de tipo T y lo inicializa con la dependencia proporcionada.<br />
+        /// Crea un nuevo estado de tipo S y lo inicializa con la dependencia proporcionada.<br />
         /// LLama al metodo Init() del estado.<br />
         /// -----------------<br />
         /// Importante: No añade a los estados posibles, Tendra que añadilos usted manualmente.<br />
@@ -845,8 +845,8 @@ namespace Sui.Machine
         // Porque llama a GetIndex (en ConstructorGestion) antes de añadirlo a estados posibles.
         private S f_crearEstado_T<S>() where S : IState
         {
-            S estado; 
-            
+            S estado;
+
             // Comprobar si S es un MonoBehaviour.
             if (typeof(MonoBehaviour).IsAssignableFrom(typeof(S)))
             {
