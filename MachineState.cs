@@ -729,6 +729,11 @@ namespace Sui.Machine
             return -1;
         }
 
+         public int GetIndex<T>()
+        {
+            return GetIndex(typeof(T).Name);
+        }
+
         /// <summary>
         /// En proceso de fabricacion.
         /// </summary>
