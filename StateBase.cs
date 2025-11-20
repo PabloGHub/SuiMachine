@@ -190,9 +190,6 @@ namespace Sui.Machine
         public event Action<int> ChangeInt;
         public event Action<IState> ChangeIState;
 
-        public event Action OnUpdate;
-        public event Action OnFixedUpdate;
-
 
         // ***********************( Contructores )*********************** //
         /// <summary>
