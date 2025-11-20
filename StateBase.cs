@@ -237,13 +237,13 @@ namespace Sui.Machine
         /// -Si el estado anterior a este es T.<br />
         /// -La funcion con la clabe a T se ejecutara.<br />
         /// -----------------------<br />
-        /// Nota: Solo puedes tener una funcion por estado.<br />
+        /// Nota: Solo puedes tener una funcion por estado entrante.<br />
         /// ___________________( English )___________________<br />
         /// Only the function will be called when the previous state is equal to the value.<br />
         /// -If the previous state to this is T.<br />
         /// -The function with the key to T will be executed.<br />
         /// -----------------------<br />
-        /// Note: You can only have one function per state.
+        /// Note: You can only have one function per enter state.
         /// </summary>
         public void OnEnterFrom<S>(Action _fun) where S : IState
         {
@@ -591,13 +591,13 @@ namespace Sui.Machine
         /// -Si el estado anterior a este es T.<br />
         /// -La funcion con la clabe a T se ejecutara.<br />
         /// -----------------------<br />
-        /// Nota: Solo puedes tener una funcion por estado.<br />
+        /// Nota: Solo puedes tener una funcion por estado entrante.<br />
         /// ___________________( English )___________________<br />
         /// Only the function will be called when the previous state is equal to the value.<br />
         /// -If the previous state to this is T.<br />
         /// -The function with the key to T will be executed.<br />
         /// -----------------------<br />
-        /// Note: You can only have one function per state.
+        /// Note: You can only have one function per enter state.
         /// </summary>
         public void OnEnterFrom<S>(Action _fun) where S : IState
         {
