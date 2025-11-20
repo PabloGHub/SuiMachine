@@ -37,8 +37,8 @@ namespace Sui.Machine
         void Init<T>(T source);
 
         // ***********************( Control de direccion )*********************** //
-        void OnEnterFrom<S>(Action _fun) where S : IState;
-        void OnEnterFrom(Type _tipo, Action _fun);
+        void EnterFrom<S>(Action _fun) where S : IState;
+        void EnterFrom(Type _tipo, Action _fun);
 
         void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour;
 
@@ -215,12 +215,12 @@ namespace Sui.Machine
                     if (_atributo is OnEnterFromAttribute _entrada)
                     {
                         Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        OnEnterFrom(_entrada.Type, _fun);
+                        EnterFrom(_entrada.Type, _fun);
                     }
                     else if (_atributo is OnExitToAttribute _salida)
                     {
                         Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        OnExitTo(_salida.Type, _fun);
+                        ExitTo(_salida.Type, _fun);
                     }
                 }
             }
@@ -243,11 +243,11 @@ namespace Sui.Machine
         /// -----------------------<br />
         /// Note: You can only have one function per enter state.
         /// </summary>
-        public void OnEnterFrom<S>(Action _fun) where S : IState
+        public void EnterFrom<S>(Action _fun) where S : IState
         {
             _entrarDesde[typeof(S)] = _fun;
         }
-        public void OnEnterFrom(Type _tipo, Action _fun)
+        public void EnterFrom(Type _tipo, Action _fun)
         {
             _entrarDesde[_tipo] = _fun;
         }
@@ -261,11 +261,11 @@ namespace Sui.Machine
         /// -La funcion con la clabe a S se ejecutara.
         /// <br />-----------------------
         /// </summary>
-        public void OnExitTo<S>(Action _fun) where S : IState
+        public void ExitTo<S>(Action _fun) where S : IState
         {
             _salirDesde[typeof(S)] = _fun;
         }
-        public void OnExitTo(Type _tipo, Action _fun)
+        public void ExitTo(Type _tipo, Action _fun)
         {
             _salirDesde[_tipo] = _fun;
         }
@@ -569,12 +569,12 @@ namespace Sui.Machine
                     if (_atributo is OnEnterFromAttribute _entrada)
                     {
                         Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        OnEnterFrom(_entrada.Type, _fun);
+                        EnterFrom(_entrada.Type, _fun);
                     }
                     else if (_atributo is OnExitToAttribute _salida)
                     {
                         Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        OnExitTo(_salida.Type, _fun);
+                        ExitTo(_salida.Type, _fun);
                     }
                 }
             }
@@ -597,11 +597,11 @@ namespace Sui.Machine
         /// -----------------------<br />
         /// Note: You can only have one function per enter state.
         /// </summary>
-        public void OnEnterFrom<S>(Action _fun) where S : IState
+        public void EnterFrom<S>(Action _fun) where S : IState
         {
             _entrarDesde[typeof(S)] = _fun;
         }
-        public void OnEnterFrom(Type _tipo, Action _fun)
+        public void EnterFrom(Type _tipo, Action _fun)
         {
             _entrarDesde[_tipo] = _fun;
         }
@@ -615,11 +615,11 @@ namespace Sui.Machine
         /// -La funcion con la clabe a S se ejecutara.
         /// <br />-----------------------
         /// </summary>
-        public void OnExitTo<S>(Action _fun) where S : IState
+        public void ExitTo<S>(Action _fun) where S : IState
         {
             _salirDesde[typeof(S)] = _fun;
         }
-        public void OnExitTo(Type _tipo, Action _fun)
+        public void ExitTo(Type _tipo, Action _fun)
         {
             _salirDesde[_tipo] = _fun;
         }

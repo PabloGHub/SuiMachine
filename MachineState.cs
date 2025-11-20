@@ -151,7 +151,7 @@ namespace Sui.Machine
                     _estadoActual.enabled = false;
                 }
 
-                var _estadoAnterior = value;
+                var _estadoAnterior = _estadoActual;
                 _estadoActual = value;
 
                 if (!_go.activeInHierarchy)
