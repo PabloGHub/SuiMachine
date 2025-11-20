@@ -521,12 +521,27 @@ namespace Sui.Machine
             }
         }
 
-
+        // ***********************( Metodos Transicionarios )*********************** //
         public void StopCoroutine(ref Coroutine eCoroutine)
         {
+            if (_go == null)
+            {
+                Debug.LogError("(Null->MachineState): The host GameObject is null in StopCoroutine.");
+                return;
+            }
             _go.GetComponent<O>().StopCoroutine(eCoroutine);
             eCoroutine = null;
         }
+        public Coroutine StartCoroutine(IEnumerator eEnumerator)
+        {
+            if (_go == null)
+            {
+                Debug.LogError("(Null->MachineState): The host GameObject is null in StartCoroutine.");
+                return null;
+            }
+            return _go.GetComponent<O>().StartCoroutine(eEnumerator);
+        }
+
 
         // ***********************( Metodos Forzar )*********************** //
         public void ForceExit()
@@ -543,6 +558,30 @@ namespace Sui.Machine
 
 
         // ***********************( Metodos Limpieza Estados )*********************** //
+        private void destruirEstado(IState _estado)
+        {
+            if (_estado is IStateMonoBehaviour estado)
+            {
+                estado.DestroyThis();
+            }
+            else if (_estado is IStateLittle)
+            {
+                _estado = null; // rezemos para que funcione el garbage collector.
+            }
+        }
+
+        private void limpiarUnEstado(IState eEstado)
+        {
+            if (eEstado != null)
+            {
+                if (eEstado == State)
+                    State = null;
+
+                eEstado.enabled = false;
+                destruirEstado(eEstado);
+            }
+        }
+
         public void ClearImmediate(List<IState> _excluidosEspecificos = null)
         {
             List<int> _idesExluidos = new();
@@ -570,8 +609,7 @@ namespace Sui.Machine
                     //_estadoIndividual.MachineState == this
                     )
                 {
-                    _estadoIndividual.enabled = false;
-                    _estadoIndividual.DestroyThis();
+                    limpiarUnEstado(_estadoIndividual);
                 }
             }
         }
@@ -820,23 +858,15 @@ namespace Sui.Machine
                 }
                 else
                 {
-                    throw new InvalidCastException($"No se puede convertir el componente de tipo '{component.GetType().Name}' a '{typeof(S).Name}'.");
+                    throw new InvalidCastException($"The component of type cannot be converted '{component.GetType().Name}' to '{typeof(S).Name}'.");
                 }
             }
             else
             {
-                // S no es un MonoBehaviour, instancia LittleStateBase (o lanza excepción si no es compatible)
-                if (typeof(S).IsAssignableFrom(typeof(LittleStateBase)))
-                    estado = (S)(object)new LittleStateBase();
-                else
-                    throw new InvalidOperationException($"El tipo {typeof(S).Name} no es un MonoBehaviour ni LittleStateBase.");
+                estado = (S)Activator.CreateInstance(typeof(S));
             }
 
-            //var newEstado = (S is MonoBehaviour e) ? _go.AddComponent<S>() : new LittleStateBase();
-
-            //S estado = _go.AddComponent<S>();
             estado.enabled = false;
-            //estado.MachineState = this;
             //estado.Identificador = f_solicitarIde_i();
             estado.Source = _source_O;
             estado.ConstructorGestion(this);
@@ -911,7 +941,6 @@ namespace Sui.Machine
         internal List<IMachineState> MaquinasDeEstados;
 
         // ***********************( Eventos )*********************** //
-        public Action OnUpdate;
 
         // ***********************( Unity )*********************** //
         private void Awake()
@@ -920,15 +949,25 @@ namespace Sui.Machine
                 MaquinasDeEstados = new List<IMachineState>();
         }
 
+        private void Update()
+        {
+            this.MaquinasDeEstados.ForEach(ms =>
+            {
+                if (ms.State != null && ms.State is IStateLittle noMono)
+                    noMono.Update();
+            });
+        }
+
         private void FixedUpdate()
         {
             this.MaquinasDeEstados.ForEach(ms =>
             {
                 if (ms.Count >= 1)
                     ms.ActualizarTransiciones();
-            });
 
-            OnUpdate?.Invoke();
+                if (ms.State != null && ms.State is IStateLittle noMono)
+                    noMono.FixedUpdate();
+            });
         }
 
         // ***********************( Metodos )*********************** //

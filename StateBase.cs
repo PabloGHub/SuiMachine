@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System;
-using UnityEngine;
-using System.Threading.Tasks;
-using System.Linq;
+﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Sui.Machine
 {
@@ -55,7 +55,17 @@ namespace Sui.Machine
         bool F_CambioEnter_b<S>(S eEstado) where S : IState;
         bool F_CambioExit_b<S>(S eEstado) where S : IState;
         int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour;
+    }
+
+    public interface IStateMonoBehaviour
+    {
         void DestroyThis();
+    }
+
+    public interface IStateLittle
+    {
+        void Update();
+        void FixedUpdate();
     }
 
     public interface ITransitionState
@@ -63,109 +73,370 @@ namespace Sui.Machine
         IEnumerator Transition();
     }
 
-    // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
-    public abstract class Base_StateBase_Little : IState
+    public abstract class Intemediario_Little : IStateLittle
     {
-        public MonoBehaviour Source { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int Index { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public Component ThisComponent { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public abstract void Update();
+        public abstract void FixedUpdate();
+    }
 
-        public bool Active => throw new NotImplementedException();
+    // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
+    public abstract class Base_StateBase_Little : Intemediario_Little, IState
+    {
+        // ***********************( Variables/Declaraciones )*********************** //
+        private MonoBehaviour _source { get; set; } = null;
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Clase padre/original donde se instancio la Maquina de Estados.<br />
+        /// ___________________( English )___________________<br />
+        /// Class parent/original where the State Machine was instantiated.<br />
+        /// </summary>
+        public MonoBehaviour Source
+        {
+            get
+            {
+                if (_source == null)
+                {
+                    Debug.LogError($"(StateLittle->StateBase): 'Source' is null, Please use it from Init.");
+                }
+                return _source;
+            }
+            set => _source = value;
+        }
 
-        public int Id => throw new NotImplementedException();
+        private int _indice_i = -1;
+        private Component _esteComponente = null;
 
-        public bool InFirstEnter => throw new NotImplementedException();
+        private Coroutine _transicion;
 
-        public int Identificador { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
+        private Dictionary<Type, Action> _salirDesde { get; set; } = new();
 
+        // ***********************( Getter, Setters e Indesxadores )*********************** //
+        /// <summary>
+        /// En proceso de fabricacion.
+        /// </summary>
+        /// <typeparam name="O"></typeparam>
+        /// <returns></returns>
+        public O GetSource<O>() where O : MonoBehaviour => Source as O;
+        public int Index
+        {
+            get => _indice_i;
+            set => _indice_i = value;
+        }
+        public Component ThisComponent
+        {
+            get => _esteComponente;
+            set => _esteComponente = value;
+        }
+        public bool Active
+        {
+            get => enabled;
+        }
+        public bool enabled { get; set; } = true;
+
+
+        // ***********************( Gestion y Control )*********************** //
+        // --- Gestion.
+        private int _identificador_i = -1;
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
+        public int Identificador
+        {
+            get
+            {
+                return _identificador_i;
+            }
+            set
+            {
+                _identificador_i = value;
+                OnChangeId?.Invoke(_identificador_i);
+            }
+        }
+        public int Id
+        {
+            get
+            {
+                return _identificador_i;
+            }
+        }
+
+        // Obsoleto: Puedes llamar a Start() de Unity, Pero tu te fias? porque yo no.
+        private bool _primeraVez_bandera = true;
+        internal bool EntrarPrimeraVez
+        {
+            get
+            {
+                _primeraVez_bandera = false;
+                return _primeraVez_bandera;
+            }
+            set
+            {
+                Debug.LogWarning($"(StateLittle->StateBase): 'InFirstEnter' -> {value}, Warning.");
+                _primeraVez_bandera = value;
+            }
+        }
+        public bool InFirstEnter
+        {
+            get { return _primeraVez_bandera; }
+        }
+
+
+
+        // ***********************( Eventos )*********************** //
         public event Action OnFirtsEnter;
         public event Action<int> OnChangeId;
         public event Action<int> ChangeInt;
         public event Action<IState> ChangeIState;
 
-        public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
-        {
-            throw new NotImplementedException();
-        }
+        public event Action OnUpdate;
+        public event Action OnFixedUpdate;
 
-        public Base_StateBase_Little()
-        {
-            throw new NotImplementedException();
-        }
 
+        // ***********************( Contructores )*********************** //
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
         public void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            throw new NotImplementedException();
-        }
+            _entrarDesde = new Dictionary<Type, Action>();
+            _salirDesde = new Dictionary<Type, Action>();
 
-        public void DestroyThis()
+            //Debug.Log($"({gameObject.name}:StateBase): ConstructorGestion -> maquina:{maquina.GetType().FullName}.");
+
+            // --- Atributos
+            var _metodos = GetType().GetMethods(
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic);
+
+            foreach (var _metodo in _metodos)
+            {
+                foreach (var _atributo in _metodo.GetCustomAttributes(true))
+                {
+                    if (_atributo is OnEnterFromAttribute _entrada)
+                    {
+                        Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
+                        OnEnterFrom(_entrada.Type, _fun);
+                    }
+                    else if (_atributo is OnExitToAttribute _salida)
+                    {
+                        Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
+                        OnExitTo(_salida.Type, _fun);
+                    }
+                }
+            }
+        }
+        public virtual void Init<O>(O source) { }
+
+
+        // ***********************( Control de direccion )*********************** //
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Solo se llamara a la funcion cuando el estado anterior es igual al valor.<br />
+        /// -Si el estado anterior a este es T.<br />
+        /// -La funcion con la clabe a T se ejecutara.<br />
+        /// -----------------------<br />
+        /// Nota: Solo puedes tener una funcion por estado.<br />
+        /// ___________________( English )___________________<br />
+        /// Only the function will be called when the previous state is equal to the value.<br />
+        /// -If the previous state to this is T.<br />
+        /// -The function with the key to T will be executed.<br />
+        /// -----------------------<br />
+        /// Note: You can only have one function per state.
+        /// </summary>
+        public void OnEnterFrom<S>(Action _fun) where S : IState
         {
-            throw new NotImplementedException();
+            _entrarDesde[typeof(S)] = _fun;
         }
-
-        public void Enter()
+        public void OnEnterFrom(Type _tipo, Action _fun)
         {
-            throw new NotImplementedException();
+            _entrarDesde[_tipo] = _fun;
         }
 
-        public void Exit()
+
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Solo se llamara a la funcion cuando el estado siguiente es igual al valor.
+        /// <br />-----------------------<br />
+        /// -Si el siguiente estado a este es T.<br />
+        /// -La funcion con la clabe a T se ejecutara.
+        /// <br />-----------------------
+        /// </summary>
+        public void OnExitTo<S>(Action _fun) where S : IState
         {
-            throw new NotImplementedException();
+            _salirDesde[typeof(S)] = _fun;
         }
-
-        public bool F_CambioEnter_b<S>(S eEstado) where S : IState
+        public void OnExitTo(Type _tipo, Action _fun)
         {
-            throw new NotImplementedException();
+            _salirDesde[_tipo] = _fun;
         }
 
-        public bool F_CambioExit_b<S>(S eEstado) where S : IState
+        // ***********************( Metodos de Transiciones )*********************** //
+        public void EndTransition(int eProximo)
         {
-            throw new NotImplementedException();
+            ChangeInt?.Invoke(eProximo);
+        }
+        public void EndTrasition(IState eProximo)
+        {
+            ChangeIState?.Invoke(eProximo);
         }
 
+
+        // ***********************( Metodos de Control )*********************** //
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
         public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            throw new NotImplementedException();
+            GetIndex(maquina);
         }
-
-        public void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
         public void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            throw new NotImplementedException();
-        }
+            if (EntrarPrimeraVez)
+                OnFirtsEnter?.Invoke();
 
+            if (this is ITransitionState estado)
+            {
+                _transicion = maquina.StartCoroutine(estado.Transition());
+            }
+        }
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
+        public void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            if (_transicion != null)
+            {
+                maquina.StopCoroutine(ref _transicion);
+            }
+        }
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
         public void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            throw new NotImplementedException();
+
+        }
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
+        public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
+        {
+            GetIndex(maquina);
+        }
+
+        // ---> usuario: 
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Se ejecutara al entrar al estado.<br />
+        /// - Al llamar a Start() se ejecutara la primera vez que entre al estado.<br />
+        /// - Se llama despues de OnEnlable()<br />
+        /// ___________________( English )___________________<br />
+        /// Will be executed when entering the state.<br />
+        /// - When calling Start(), it will be executed the first time you enter the state.<br />
+        /// - It is called after OnEnable().<br />
+        /// </summary>
+        public abstract void Enter();
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Se ejecutara al salir del estado.<br />
+        /// - Se llama antes de OnDisable().<br />
+        /// ___________________( English )___________________<br />
+        /// Will be executed when leaving the state.<br />
+        /// - It is called before OnDisable().<br />
+        /// </summary>
+        public abstract void Exit();
+
+        /*
+        /// <summary>
+        /// En_proceso.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Task EnterAsync()
+        {
+            Enter();
+            return Task.CompletedTask;
+        }
+        /// <summary>
+        /// En_proceso.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Task ExitAsync()
+        {
+            Exit();
+            return Task.CompletedTask;
+        }
+        */
+
+        // ***********************( Mi Unity )*********************** //
+        // ***********************( Unity -> Mi )*********************** //
+
+        // ***********************( Metodos Funcionales )*********************** //
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
+        /// Si entra al estado desde uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
+        /// </summary>
+        public bool F_CambioEnter_b<S>(S eEstado) where S : IState
+        {
+            if (eEstado == null)
+            {
+                Debug.LogError($"(StateBase): El estado pasado es nulo.");
+                return false;
+            }
+
+            if (_entrarDesde.Count() <= 0)
+                return false;
+
+            foreach (var item in _entrarDesde)
+            {
+                if (item.Key.GetType() == eEstado.GetType())
+                {
+                    item.Value?.Invoke();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
+        /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
+        /// </summary>
+        public bool F_CambioExit_b<S>(S eEstado) where S : IState
+        {
+            if (eEstado == null)
+            {
+                Debug.LogError($"(StateBase): El estado pasado es nulo.");
+                return false;
+            }
+
+            if (_salirDesde.Count() <= 0)
+                return false;
+
+            foreach (var item in _salirDesde)
+            {
+                if (item.Key.GetType() == eEstado.GetType())
+                {
+                    item.Value?.Invoke();
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            throw new NotImplementedException();
-        }
-
-        public void Init<T>(T source)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnEnterFrom<S>(Action _fun) where S : IState
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnEnterFrom(Type _tipo, Action _fun)
-        {
-            throw new NotImplementedException();
+            _indice_i = maquina.GetIndex(this);
+            return _indice_i;
         }
     }
 
-    public abstract class Base_StateBase : MonoBehaviour, IState
+    public abstract class Base_StateBase : MonoBehaviour, IState, IStateMonoBehaviour
     {
         // ***********************( Variables/Declaraciones )*********************** //
         private MonoBehaviour _source { get; set; } = null;
@@ -534,12 +805,10 @@ namespace Sui.Machine
         
     }
 
-    public class LittleStateBase : Base_StateBase_Little
+    public abstract class LittleStateBase : Base_StateBase_Little
     {
         public LittleStateBase()
-        {
-            throw new NotImplementedException();
-        }
+        { }
     }
 
     // ***********************( Atributos )*********************** //
