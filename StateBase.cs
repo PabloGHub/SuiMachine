@@ -80,6 +80,8 @@ namespace Sui.Machine
         public virtual void FixedUpdate() { }
     }
 
+
+    // public bool enabled { get; set; } = true;
     // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.
     public abstract class Base_StateBase_Little : Intemediario_Little, IState
     {
