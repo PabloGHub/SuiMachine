@@ -73,6 +73,7 @@ namespace Sui.Machine
         IEnumerator Transition();
     }
 
+    // Puto Unity.
     public abstract class Intemediario_Little : IStateLittle
     {
         public abstract void Update();
