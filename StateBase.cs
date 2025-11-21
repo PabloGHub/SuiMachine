@@ -280,6 +280,14 @@ namespace Sui.Machine
             ChangeIState?.Invoke(eProximo);
         }
 
+        public void ChangeState(int eEstado)
+        {
+            ChangeInt?.Invoke(eEstado);
+        }
+        public void ChangeState(IState eEstado)
+        {
+            ChangeIState?.Invoke(eEstado);
+        }
 
         // ***********************( Metodos de Control )*********************** //
         /// <summary>
@@ -634,6 +642,14 @@ namespace Sui.Machine
             ChangeIState?.Invoke(eProximo);
         }
 
+        public void ChangeState(int eEstado)
+        {
+            ChangeInt?.Invoke(eEstado);
+        }
+        public void ChangeState(IState eEstado)
+        {
+            ChangeIState?.Invoke(eEstado);
+        }
 
         // ***********************( Metodos de Control )*********************** //
         /// <summary>
