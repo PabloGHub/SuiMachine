@@ -2,18 +2,53 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Sui.Machine
 {
-    interface IMachineState
+    public interface IMachineState
     {
-        public IState State { get; set; }
-        public int Count { get; }
-        //private readonly int _identificador_i;
+        IState State { get; set; }
+        int Count { get; }
+
+        int Identificador { get; set; }
 
         void ActualizarTransiciones();
+
+        // Métodos públicos de MachineState
+        IState this[int _indice_i] { get; set; }
+        int this[IState _estado] { get; set; }
+        List<IState> PossibleStates { get; set; }
+        List<IState> this[List<IState> _estadosPosibles_obj] { get; set; }
+        string[] NamesStates { get; }
+        string NameStates2 { get; }
+        bool Active { get; set; }
+        int IndexState { get; }
+        event Action<IState> OnStateChanged;
+
+        IState ChangeState(int _nuevoEstado_i);
+        IState ChangeState(string _novoEstado_s);
+        IState ChangeState<T>();
+        void AgregarEstadoPersistente(IState estado);
+        void RemoverEstadoPersistente(IState estado);
+        void StopCoroutine(ref Coroutine eCoroutine);
+        Coroutine StartCoroutine(IEnumerator eEnumerator);
+        void ForceExit();
+        bool AddTransition(Func<bool> condition, int stateDestine);
+        bool AgregarTransicion(Func<bool> e_condicion_fb, int e_estadoDestino_i);
+        void UpdateTransitions();
+        int GetIndex(IState estado);
+        int GetIndex(string nombreParaIndex);
+        int GetIndex<S>();
+        IState GetState(int _indice_i);
+        string GetNameState(int _indice_i);
+        S CreateState<S>() where S : IState;
+        void CreateStateAutoAdd<S>() where S : IState;
+        List<IState> ChangeListSates(List<IState> _novoLista);
+        void ClearImmediate(List<IState> _excluidosEspecificos = null);
+        void Clear(List<IState> _excluidosEspecificos = null);
+        void Rm(List<IState> _listaBorrar);
+        void Rm(IState _estadoBorrar);
     }
 
     // TODO: Esta creado lo nombres, ahora toca Implentarlo en los demas sistemas (Usar nombres en vez del indice).
@@ -116,15 +151,17 @@ namespace Sui.Machine
 
         private Dictionary<Func<bool>, IState> _transiciones = new();
         private GameObject _go;
-        private O _source_O; // Script donde fue instanciada la maquina de estados.
-        private GestionadorMachineState _gestionador_obj;
+        private O _owner; // Script donde fue instanciada la maquina de estados.
+        private GestionadorMachineState _gestionador;
 
         // --- Control.
-        private bool _activo_b = true;
+        private bool _activo = true;
 
         // --- Gestion.
         private HashSet<int> _todosEstados = new();
-        private int _crescendoId_i = 0;
+        private int _crescendoId = 0;
+
+        private int _identificador;
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         // TODO: Si llega un State desconocido, que se cree automaticamente y se añada a la lista de estados posibles.
@@ -168,6 +205,12 @@ namespace Sui.Machine
 
                 ActualizarTransiciones();
             }
+        }
+
+        int IMachineState.Identificador
+        {
+            set { _identificador = value; }
+            get { return _identificador; }
         }
 
 
@@ -319,7 +362,7 @@ namespace Sui.Machine
         /// </summary>
         public bool Active
         {
-            get { return _activo_b; }
+            get { return _activo; }
             set
             {
                 if (_estadoActual != null)
@@ -329,7 +372,7 @@ namespace Sui.Machine
                     else
                         _estadoActual.enabled = false;
 
-                    _activo_b = value;
+                    _activo = value;
                 }
                 else
                     Debug.Log("(MachineState): State is NULL.");
@@ -553,7 +596,7 @@ namespace Sui.Machine
         // ***********************( Metodos Gestion Ides )*********************** //
         private int f_solicitarIde_i()
         {
-            return ++_crescendoId_i;
+            return ++_crescendoId;
         }
 
 
@@ -809,14 +852,14 @@ namespace Sui.Machine
             return f_crearEstado_T<S>();
         }
 
-        //public static T CreateState<T>(GameObject e_go, O e_source_O, MachineState<O> e_ms) where T : IState
+        //public static T CreateState<T>(GameObject e_go, O eOwner, MachineState<O> e_ms) where T : IState
         //{
         //    T estado = e_go.AddComponent<T>();
         //    estado.enabled = false;
         //    //estado.Identificador = f_solicitarIde_i();
-        //    estado.Source = e_source_O;
+        //    estado.Owner = eOwner;
         //    estado.ConstructorGestion(e_ms);
-        //    estado.Init(e_source_O);
+        //    estado.Init(eOwner);
 
         //    return estado;
         //}
@@ -868,33 +911,35 @@ namespace Sui.Machine
 
             estado.enabled = false;
             //estado.Identificador = f_solicitarIde_i();
-            estado.Source = _source_O;
+            estado.Owner = _owner;
             estado.ConstructorGestion(this);
-            estado.Init(_source_O);
+            estado.Init(_owner);
 
             estado.ChangeInt += (int valor) => ChangeState(valor);
             estado.ChangeIState += (IState estado) => { State = estado; };
+
+            estado.Machine = this;
 
             return estado;
         }
 
         // ***********************( Constructores )*********************** //
-        public MachineState(GameObject goHost, List<IState> estadosPosibles, O _source_O)
+        public MachineState(GameObject goHost, List<IState> estadosPosibles, O Owner)
         {
             PossibleStates = estadosPosibles ?? new List<IState>();
 
-            inicializar(goHost, _source_O);
+            inicializar(goHost, Owner);
         }
-        public MachineState(GameObject goHost, O _source_O)
+        public MachineState(GameObject goHost, O Owner)
         {
-            inicializar(goHost, _source_O);
+            inicializar(goHost, Owner);
         }
 
 
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        private void inicializar(GameObject goHost, O _source_O)
+        private void inicializar(GameObject goHost, O Owner)
         {
             if (goHost == null)
             {
@@ -902,7 +947,7 @@ namespace Sui.Machine
                 return;
             }
 
-            if (_source_O == null)
+            if (Owner == null)
             {
                 Debug.LogError($"({_go.name}->MachineState): La fuente de datos es null en Inicializar.");
                 return;
@@ -912,22 +957,18 @@ namespace Sui.Machine
             _estadosPosibles ??= new(this);
 
             _go = goHost;
-            this._source_O = _source_O;
+            this._owner = Owner;
 
-            if (_gestionador_obj == null)
+            if (GestionadorMachineState.Instancia == null)
             {
-                if (!_go.TryGetComponent<GestionadorMachineState>(out var gestionador))
-                {
-                    gestionador = _go.AddComponent<GestionadorMachineState>();
-                    gestionador.MaquinasDeEstados.Add(this);
-                }
-                else
-                {
-                    if (!gestionador.MaquinasDeEstados.Contains(this))
-                        gestionador.MaquinasDeEstados.Add(this);
-                }
-
-                _gestionador_obj = gestionador;
+                GameObject gestionadorGO = new("GestionadorMachineState");
+                _gestionador = gestionadorGO.AddComponent<GestionadorMachineState>();
+                GestionadorMachineState.Instancia.AgregarMaquina(this);
+            }
+            else
+            {
+                _gestionador = GestionadorMachineState.Instancia;
+                GestionadorMachineState.Instancia.AgregarMaquina(this);
             }
         }
     }
@@ -938,20 +979,35 @@ namespace Sui.Machine
     public class GestionadorMachineState : MonoBehaviour
     {
         // ***********************( Variables )*********************** //
-        internal List<IMachineState> MaquinasDeEstados;
+        public static GestionadorMachineState Instancia { get; private set; }
+
+        private List<IMachineState> _maquinasDeEstados;
+        private int _crescendoId = 0;
+
+        // ***********************( GSI )*********************** //
 
         // ***********************( Eventos )*********************** //
 
         // ***********************( Unity )*********************** //
         private void Awake()
         {
-            if (MaquinasDeEstados == null)
-                MaquinasDeEstados = new List<IMachineState>();
+            if (Instancia == null)
+            {
+                Instancia = this;
+                DontDestroyOnLoad(this);
+            }
+            else
+            {
+                Destroy(this);
+            }
+
+            if (_maquinasDeEstados == null)
+                _maquinasDeEstados = new List<IMachineState>();
         }
 
         private void Update()
         {
-            this.MaquinasDeEstados.ForEach(ms =>
+            this._maquinasDeEstados.ForEach(ms =>
             {
                 if (ms.State != null && ms.State is IStateLittle noMono)
                     noMono.Update();
@@ -960,7 +1016,7 @@ namespace Sui.Machine
 
         private void FixedUpdate()
         {
-            this.MaquinasDeEstados.ForEach(ms =>
+            this._maquinasDeEstados.ForEach(ms =>
             {
                 if (ms.Count >= 1)
                     ms.ActualizarTransiciones();
@@ -971,5 +1027,18 @@ namespace Sui.Machine
         }
 
         // ***********************( Metodos )*********************** //
+        private int solicitarIde()
+        {
+            return ++_crescendoId;
+        }
+
+        public void AgregarMaquina(IMachineState ms)
+        {
+            if (!_maquinasDeEstados.Contains(ms))
+            {
+                ms.Identificador = solicitarIde();
+                _maquinasDeEstados.Add(ms);
+            }
+        }
     }
 }

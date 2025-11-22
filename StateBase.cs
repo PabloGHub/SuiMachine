@@ -2,17 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Sui.Machine
 {
+    // TODO: Implementar de forma explicita muchas funciones internas.
     public interface IState
     {
         // ***********************( Getter, Setters e Indesxadores )*********************** //
-        MonoBehaviour Source { get; set; }
+        MonoBehaviour Owner { get; set; }
 
-        O GetSource<O>() where O : MonoBehaviour => Source as O;
+        O GetOwner<O>() where O : MonoBehaviour => Owner as O;
+
+        IMachineState Machine { get; set; }
 
         int Index { get; set; }
         Component ThisComponent { get; set; }
@@ -34,7 +36,24 @@ namespace Sui.Machine
 
         // ***********************( Contructores )*********************** //
         void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour;
-        void Init<T>(T source);
+        void Init<T>(T owner);
+
+        // ***********************( Metodos de Transiciones )*********************** //
+        void EndTransition(int eProximo);
+        void EndTrasition(IState eProximo);
+
+        // ***********************( Metodos de Maquina )*********************** //
+        IState ChangeState(int eEstado);
+        IState ChangeState(IState eEstado);
+        IState ChangeState<T>();
+
+        int GetMyIndex();
+        int GetIndex(string eName);
+        int GetIndex(IState eEstado);
+        int GetIndex<S>();
+
+        IState GetState(int eIndex);
+        string GetNameState(int eIndex);
 
         // ***********************( Control de direccion )*********************** //
         void EnterFrom<S>(Action _fun) where S : IState;
@@ -54,7 +73,7 @@ namespace Sui.Machine
         // ***********************( Metodos Funcionales )*********************** //
         bool F_CambioEnter_b<S>(S eEstado) where S : IState;
         bool F_CambioExit_b<S>(S eEstado) where S : IState;
-        int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour;
+        int SaveIndex<O>(MachineState<O> maquina) where O : MonoBehaviour;
     }
 
     public interface IStateMonoBehaviour
@@ -84,24 +103,24 @@ namespace Sui.Machine
     public abstract class Base_StateBase_Little : Intemediario_Little, IState
     {
         // ***********************( Variables/Declaraciones )*********************** //
-        private MonoBehaviour _source { get; set; } = null;
+        private MonoBehaviour _owner { get; set; } = null;
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Clase padre/original donde se instancio la Maquina de Estados.<br />
         /// ___________________( English )___________________<br />
         /// Class parent/original where the State Machine was instantiated.<br />
         /// </summary>
-        public MonoBehaviour Source
+        public MonoBehaviour Owner
         {
             get
             {
-                if (_source == null)
+                if (_owner == null)
                 {
-                    Debug.LogError($"(StateLittle->StateBase): 'Source' is null, Please use it from Init.");
+                    Debug.LogError($"(StateLittle->StateBase): 'Owner' is null, Please use it from Init.");
                 }
-                return _source;
+                return _owner;
             }
-            set => _source = value;
+            set => _owner = value;
         }
 
         private int _indice_i = -1;
@@ -112,13 +131,15 @@ namespace Sui.Machine
         private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
         private Dictionary<Type, Action> _salirDesde { get; set; } = new();
 
+        IMachineState _maquina;
+
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
         /// En proceso de fabricacion.
         /// </summary>
         /// <typeparam name="O"></typeparam>
         /// <returns></returns>
-        public O GetSource<O>() where O : MonoBehaviour => Source as O;
+        public O GetOwner<O>() where O : MonoBehaviour => Owner as O;
         public int Index
         {
             get => _indice_i;
@@ -135,6 +156,11 @@ namespace Sui.Machine
         }
         public bool enabled { get; set; } = true;
 
+        public IMachineState Machine
+        {
+            get => _maquina;
+            set => _maquina = value;
+        }
 
         // ***********************( Gestion y Control )*********************** //
         // --- Gestion.
@@ -225,7 +251,7 @@ namespace Sui.Machine
                 }
             }
         }
-        public virtual void Init<O>(O source) { }
+        public virtual void Init<O>(O owner) { }
 
 
         // ***********************( Control de direccion )*********************** //
@@ -280,13 +306,44 @@ namespace Sui.Machine
             ChangeIState?.Invoke(eProximo);
         }
 
-        public void ChangeState(int eEstado)
+        // ***********************( Metodos de Maquina )*********************** //
+        public IState ChangeState(int eEstado)
         {
-            ChangeInt?.Invoke(eEstado);
+            return Machine.ChangeState(eEstado);
         }
-        public void ChangeState(IState eEstado)
+        public IState ChangeState(IState eEstado)
         {
-            ChangeIState?.Invoke(eEstado);
+            return Machine.ChangeState(Machine.GetIndex(eEstado));
+        }
+        public IState ChangeState<T>()
+        {
+            return Machine.ChangeState<T>();
+        }
+
+        public int GetMyIndex()
+        {
+            return _indice_i;
+        }
+        public int GetIndex(string eName)
+        {
+            return Machine.GetIndex(eName);
+        }
+        public int GetIndex(IState eEstado)
+        {
+            return Machine.GetIndex(eEstado);
+        }
+        public int GetIndex<S>()
+        {
+            return Machine.GetIndex<S>();
+        }
+
+        public IState GetState(int eIndex)
+        {
+            return Machine.GetState(eIndex);
+        }
+        public string GetNameState(int eIndex)
+        {
+            return Machine.GetNameState(eIndex);
         }
 
         // ***********************( Metodos de Control )*********************** //
@@ -295,7 +352,7 @@ namespace Sui.Machine
         /// </summary>
         public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            GetIndex(maquina);
+            SaveIndex(maquina);
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
@@ -332,7 +389,7 @@ namespace Sui.Machine
         /// </summary>
         public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            GetIndex(maquina);
+            SaveIndex(maquina);
         }
 
         // ---> usuario: 
@@ -435,7 +492,7 @@ namespace Sui.Machine
             return false;
         }
 
-        public int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public int SaveIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             _indice_i = maquina.GetIndex(this);
             return _indice_i;
@@ -445,24 +502,24 @@ namespace Sui.Machine
     public abstract class Base_StateBase : MonoBehaviour, IState, IStateMonoBehaviour
     {
         // ***********************( Variables/Declaraciones )*********************** //
-        private MonoBehaviour _source { get; set; } = null;
+        private MonoBehaviour _owner { get; set; } = null;
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Clase padre/original donde se instancio la Maquina de Estados.<br />
         /// ___________________( English )___________________<br />
         /// Class parent/original where the State Machine was instantiated.<br />
         /// </summary>
-        public MonoBehaviour Source
+        public MonoBehaviour Owner
         {
             get
             {
-                if (_source == null)
+                if (_owner == null)
                 {
-                    Debug.LogError($"({gameObject.name}:StateBase): 'Source' is null, Please use it from Init.");
+                    Debug.LogError($"({gameObject.name}:StateBase): 'Owner' is null, Please use it from Init.");
                 }
-                return _source;
+                return _owner;
             }
-            set => _source = value;
+            set => _owner = value;
         }
 
         private int _indice_i = -1;
@@ -473,13 +530,15 @@ namespace Sui.Machine
         private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
         private Dictionary<Type, Action> _salirDesde { get; set; } = new();
 
+        IMachineState _maquina;
+
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
         /// En proceso de fabricacion.
         /// </summary>
         /// <typeparam name="O"></typeparam>
         /// <returns></returns>
-        public O GetSource<O>() where O : MonoBehaviour => Source as O;
+        public O GetOwner<O>() where O : MonoBehaviour => Owner as O;
         public int Index
         {
             get => _indice_i;
@@ -493,6 +552,12 @@ namespace Sui.Machine
         public bool Active
         {
             get => enabled;
+        }
+
+        public IMachineState Machine
+        {
+            get => _maquina;
+            set => _maquina = value;
         }
 
         // ***********************( Gestion y Control )*********************** //
@@ -587,7 +652,7 @@ namespace Sui.Machine
                 }
             }
         }
-        public virtual void Init<O>(O source) { }
+        public virtual void Init<O>(O owner) { }
 
 
         // ***********************( Control de direccion )*********************** //
@@ -642,13 +707,46 @@ namespace Sui.Machine
             ChangeIState?.Invoke(eProximo);
         }
 
-        public void ChangeState(int eEstado)
+
+
+        // ***********************( Metodos de Maquina )*********************** //
+        public IState ChangeState(int eEstado)
         {
-            ChangeInt?.Invoke(eEstado);
+            return Machine.ChangeState(eEstado);
         }
-        public void ChangeState(IState eEstado)
+        public IState ChangeState(IState eEstado)
         {
-            ChangeIState?.Invoke(eEstado);
+            return Machine.ChangeState(Machine.GetIndex(eEstado));
+        }
+        public IState ChangeState<T>()
+        {
+            return Machine.ChangeState<T>();
+        }
+
+        public int GetMyIndex()
+        {
+            return _indice_i;
+        }
+        public int GetIndex(string eName)
+        {
+            return Machine.GetIndex(eName);
+        }
+        public int GetIndex(IState eEstado)
+        {
+            return Machine.GetIndex(eEstado);
+        }
+        public int GetIndex<S>()
+        {
+            return Machine.GetIndex<S>();
+        }
+
+        public IState GetState(int eIndex)
+        {
+            return Machine.GetState(eIndex);
+        }
+        public string GetNameState(int eIndex)
+        {
+            return Machine.GetNameState(eIndex);
         }
 
         // ***********************( Metodos de Control )*********************** //
@@ -658,7 +756,7 @@ namespace Sui.Machine
         public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             ThisComponent = GetComponent(GetType());
-            GetIndex(maquina);
+            SaveIndex(maquina);
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
@@ -695,7 +793,7 @@ namespace Sui.Machine
         /// </summary>
         public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
-            GetIndex(maquina);
+            SaveIndex(maquina);
         }
 
         // ---> usuario: 
@@ -798,7 +896,7 @@ namespace Sui.Machine
             return false;
         }
 
-        public int GetIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public int SaveIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
         {
             _indice_i = maquina.GetIndex(this);
             return _indice_i;
