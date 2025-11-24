@@ -400,7 +400,9 @@ namespace Sui.Machine
             set { _owner = value; }
         }
 
+#pragma warning disable CS0693 // wow.
         public O GetOwner<O>() where O : MonoBehaviour
+#pragma warning restore CS0693
         {
             return Owener as O;
         }
@@ -503,7 +505,7 @@ namespace Sui.Machine
             if (e_estado != null)
             {
                 if (e_estado.Identificador <= 0)
-                    e_estado.Identificador = f_solicitarIde_i();
+                    e_estado.Identificador = solicitarIde();
                 if (!this._todosEstados.Contains(e_estado.Identificador))
                     this._todosEstados.Add(e_estado.Identificador);
             }
@@ -607,7 +609,7 @@ namespace Sui.Machine
 
 
         // ***********************( Metodos Gestion Ides )*********************** //
-        private int f_solicitarIde_i()
+        private int solicitarIde()
         {
             return ++_crescendoId;
         }
@@ -862,7 +864,7 @@ namespace Sui.Machine
         /// <returns>Es: Retorna el nuevo estado desactivado.</returns>
         public S CreateState<S>() where S : IState
         {
-            return f_crearEstado_T<S>();
+            return crearEstado<S>();
         }
 
         //public static T CreateState<T>(GameObject e_go, O eOwner, MachineState<O> e_ms) where T : IState
@@ -887,9 +889,9 @@ namespace Sui.Machine
         /// <typeparam name="S">Estado que se quiera craer</typeparam>
         public void CreateStateAutoAdd<S>() where S : IState
         {
-            S novoEstado = f_crearEstado_T<S>();
+            S novoEstado = crearEstado<S>();
 
-            novoEstado.Identificador = f_solicitarIde_i();
+            novoEstado.Identificador = solicitarIde();
 
             if (!_estadosPosibles.Contains(novoEstado))
                 _estadosPosibles.Add(novoEstado);
@@ -899,7 +901,7 @@ namespace Sui.Machine
 
         // TODO: Descubrir porque en medio del porceso salta un warging proveniente de GetIndex.
         // Porque llama a GetIndex (en ConstructorGestion) antes de añadirlo a estados posibles.
-        private S f_crearEstado_T<S>() where S : IState
+        private S crearEstado<S>() where S : IState
         {
             S estado;
 
@@ -923,8 +925,7 @@ namespace Sui.Machine
             }
 
             estado.enabled = false;
-            //estado.Identificador = f_solicitarIde_i();
-            estado.Owner = _owner;
+            estado.Duenno = _owner;
             estado.ConstructorGestion(this);
             estado.Init(_owner);
             estado.Init();

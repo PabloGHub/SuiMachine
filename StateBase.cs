@@ -10,7 +10,9 @@ namespace Sui.Machine
     public interface IState
     {
         // ***********************( Getter, Setters e Indesxadores )*********************** //
-        MonoBehaviour Owner { get; set; }
+        MonoBehaviour Owner { get; }
+
+        MonoBehaviour Duenno { get; set; }
 
         O GetOwner<O>() where O : MonoBehaviour => Owner as O;
 
@@ -121,6 +123,11 @@ namespace Sui.Machine
                 }
                 return _owner;
             }
+        }
+
+        MonoBehaviour IState.Duenno
+        {
+            get => _owner;
             set => _owner = value;
         }
 
@@ -177,7 +184,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public int Identificador
+        int IState.Identificador
         {
             get
             {
@@ -230,7 +237,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.ConstructorGestion<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             _entrarDesde = new Dictionary<Type, Action>();
             _salirDesde = new Dictionary<Type, Action>();
@@ -359,14 +366,14 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             SaveIndex(maquina);
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionTrasEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             if (EntrarPrimeraVez)
                 OnFirtsEnter?.Invoke();
@@ -379,7 +386,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             if (_transicion != null)
             {
@@ -389,14 +396,14 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionTrasSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
 
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.AlEntrarEstadosPosibles<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             SaveIndex(maquina);
         }
@@ -452,7 +459,7 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// Si entra al estado desde uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        public bool F_CambioEnter_b<S>(S eEstado) where S : IState
+        bool IState.F_CambioEnter_b<S>(S eEstado) // where S : IState
         {
             if (eEstado == null)
             {
@@ -478,7 +485,7 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        public bool F_CambioExit_b<S>(S eEstado) where S : IState
+        bool IState.F_CambioExit_b<S>(S eEstado) // where S : IState
         {
             if (eEstado == null)
             {
@@ -528,6 +535,11 @@ namespace Sui.Machine
                 }
                 return _owner;
             }
+        }
+
+        MonoBehaviour IState.Duenno
+        {
+            get => _owner;
             set => _owner = value;
         }
 
@@ -583,7 +595,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public int Identificador
+        int IState.Identificador
         {
             get
             {
@@ -636,7 +648,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.ConstructorGestion<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             // Deberia funcionar pero hay que testealo pues tengo malas experiencias.
             this.ThisComponent = this.GetComponent(this.GetType());
@@ -770,7 +782,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             ThisComponent = GetComponent(GetType());
             SaveIndex(maquina);
@@ -778,7 +790,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionTrasEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             if (EntrarPrimeraVez)
                 OnFirtsEnter?.Invoke();
@@ -791,7 +803,7 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             if (_transicion != null)
             {
@@ -801,14 +813,14 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.GestionTrasSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
 
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        public void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour
+        void IState.AlEntrarEstadosPosibles<O>(MachineState<O> maquina) // where O : MonoBehaviour
         {
             SaveIndex(maquina);
         }
@@ -864,7 +876,7 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// Si entra al estado desde uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        public bool F_CambioEnter_b<S>(S eEstado) where S : IState
+        bool IState.F_CambioEnter_b<S>(S eEstado) // where S : IState
         {
             if (eEstado == null)
             {
@@ -890,7 +902,7 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        public bool F_CambioExit_b<S>(S eEstado) where S : IState
+        bool IState.F_CambioExit_b<S>(S eEstado)//  where S : IState
         {
             if (eEstado == null)
             {
