@@ -37,6 +37,7 @@ namespace Sui.Machine
         // ***********************( Contructores )*********************** //
         void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour;
         void Init<T>(T owner);
+        void Init();
 
         // ***********************( Metodos de Transiciones )*********************** //
         void EndTransition(int eProximo);
@@ -139,7 +140,15 @@ namespace Sui.Machine
         /// </summary>
         /// <typeparam name="O"></typeparam>
         /// <returns></returns>
-        public O GetOwner<O>() where O : MonoBehaviour => Owner as O;
+        public O GetOwner<O>() where O : MonoBehaviour
+        {
+            return Owner as O;
+        }
+        public O GetOwner2<O>() where O : MonoBehaviour
+        {
+            return _maquina.GetOwner<O>();
+        }
+
         public int Index
         {
             get => _indice_i;
@@ -252,7 +261,7 @@ namespace Sui.Machine
             }
         }
         public virtual void Init<O>(O owner) { }
-
+        public virtual void Init() { }
 
         // ***********************( Control de direccion )*********************** //
         /// <summary>
@@ -538,7 +547,15 @@ namespace Sui.Machine
         /// </summary>
         /// <typeparam name="O"></typeparam>
         /// <returns></returns>
-        public O GetOwner<O>() where O : MonoBehaviour => Owner as O;
+        public O GetOwner<O>() where O : MonoBehaviour
+        {
+            return Owner as O;
+        }
+        public O GetOwner2<O>() where O : MonoBehaviour
+        {
+            return _maquina.GetOwner<O>();
+        }
+
         public int Index
         {
             get => _indice_i;
@@ -653,7 +670,7 @@ namespace Sui.Machine
             }
         }
         public virtual void Init<O>(O owner) { }
-
+        public virtual void Init() { }
 
         // ***********************( Control de direccion )*********************** //
         /// <summary>

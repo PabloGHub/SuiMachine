@@ -13,6 +13,8 @@ namespace Sui.Machine
 
         int Identificador { get; set; }
 
+        O GetOwner<O>() where O : MonoBehaviour;
+
         void ActualizarTransiciones();
 
         // Métodos públicos de MachineState
@@ -29,6 +31,7 @@ namespace Sui.Machine
         IState ChangeState(int _nuevoEstado_i);
         IState ChangeState(string _novoEstado_s);
         IState ChangeState<T>();
+
         void AgregarEstadoPersistente(IState estado);
         void RemoverEstadoPersistente(IState estado);
         void StopCoroutine(ref Coroutine eCoroutine);
@@ -391,6 +394,17 @@ namespace Sui.Machine
         }
 
 
+        public O Owener
+        {
+            get { return _owner; }
+            set { _owner = value; }
+        }
+
+        public O GetOwner()
+        {
+            return Owener as O;
+        }
+
         // ***********************( Eventos )*********************** //
         public event Action<IState> OnStateChanged;
 
@@ -494,7 +508,6 @@ namespace Sui.Machine
                     this._todosEstados.Add(e_estado.Identificador);
             }
         }
-
 
         // NOTA: no se si dejarlo pues hace lo mismo que 'PosibleStates'.
         public List<IState> ChangeListSates(List<IState> _novoLista)
