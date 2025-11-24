@@ -927,6 +927,7 @@ namespace Sui.Machine
             estado.Owner = _owner;
             estado.ConstructorGestion(this);
             estado.Init(_owner);
+            estado.Init();
 
             estado.ChangeInt += (int valor) => ChangeState(valor);
             estado.ChangeIState += (IState estado) => { State = estado; };
