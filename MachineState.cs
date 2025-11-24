@@ -400,7 +400,7 @@ namespace Sui.Machine
             set { _owner = value; }
         }
 
-        public O GetOwner()
+        public O GetOwner<O>() where O : MonoBehaviour
         {
             return Owener as O;
         }
