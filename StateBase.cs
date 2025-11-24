@@ -143,15 +143,28 @@ namespace Sui.Machine
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
-        /// En proceso de fabricacion.
+        /// ___________________( Español )___________________<br />
+        /// Devuelve el dueño de la maquina de estados casteado al tipo especificado.<br />
+        /// ___________________( English )___________________<br />
+        /// Returns the owner of the state machine cast to the specified type.<br />
         /// </summary>
-        /// <typeparam name="O"></typeparam>
-        /// <returns></returns>
+        /// <typeparam name="O">ES: TipoDato del dueño <br />EN: DataType of the owner</typeparam>
+        /// <returns>Owner but "O" type</returns>
         public O GetOwner<O>() where O : MonoBehaviour
         {
             return Owner as O;
         }
-        public O GetOwner2<O>() where O : MonoBehaviour
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Devuelve el dueño de la maquina de estados casteado al tipo especificado.<br />
+        /// Lo coge directamente de la maquina de estados.<br />
+        /// ___________________( English )___________________<br />
+        /// Returns the owner of the state machine cast to the specified type.<br />
+        /// It takes it directly from the state machine.<br />
+        /// </summary>
+        /// <typeparam name="O">ES: TipoDato del dueño <br />EN: DataType of the owner</typeparam>
+        /// <returns>Owner but "O" type</returns>
+        public O GetOwnerForMachine<O>() where O : MonoBehaviour
         {
             return _maquina.GetOwner<O>();
         }
@@ -463,7 +476,7 @@ namespace Sui.Machine
         {
             if (eEstado == null)
             {
-                Debug.LogError($"(StateBase): El estado pasado es nulo.");
+                // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
@@ -489,7 +502,7 @@ namespace Sui.Machine
         {
             if (eEstado == null)
             {
-                Debug.LogError($"(StateBase): El estado pasado es nulo.");
+                // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
@@ -555,15 +568,28 @@ namespace Sui.Machine
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
-        /// En proceso de fabricacion.
+        /// ___________________( Español )___________________<br />
+        /// Devuelve el dueño de la maquina de estados casteado al tipo especificado.<br />
+        /// ___________________( English )___________________<br />
+        /// Returns the owner of the state machine cast to the specified type.<br />
         /// </summary>
-        /// <typeparam name="O"></typeparam>
-        /// <returns></returns>
+        /// <typeparam name="O">ES: TipoDato del dueño <br />EN: DataType of the owner</typeparam>
+        /// <returns>Owner but "O" type</returns>
         public O GetOwner<O>() where O : MonoBehaviour
         {
             return Owner as O;
         }
-        public O GetOwner2<O>() where O : MonoBehaviour
+        /// <summary>
+        /// ___________________( Español )___________________<br />
+        /// Devuelve el dueño de la maquina de estados casteado al tipo especificado.<br />
+        /// Lo coge directamente de la maquina de estados.<br />
+        /// ___________________( English )___________________<br />
+        /// Returns the owner of the state machine cast to the specified type.<br />
+        /// It takes it directly from the state machine.<br />
+        /// </summary>
+        /// <typeparam name="O">ES: TipoDato del dueño <br />EN: DataType of the owner</typeparam>
+        /// <returns>Owner but "O" type</returns>
+        public O GetOwnerForMachine<O>() where O : MonoBehaviour
         {
             return _maquina.GetOwner<O>();
         }
@@ -880,7 +906,7 @@ namespace Sui.Machine
         {
             if (eEstado == null)
             {
-                Debug.LogError($"(StateBase): El estado pasado es nulo.");
+                // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
@@ -902,11 +928,11 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        bool IState.F_CambioExit_b<S>(S eEstado)//  where S : IState
+        bool IState.F_CambioExit_b<S>(S eEstado) //  where S : IState
         {
             if (eEstado == null)
             {
-                Debug.LogError($"(StateBase): El estado pasado es nulo.");
+                // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
