@@ -28,9 +28,16 @@ namespace Sui.Machine
         int IndexState { get; }
         event Action<IState> OnStateChanged;
 
+        //void manejarEntradaEstado(IState eNovoEstado);
+        //void manejarSalidaEstado(IState eNovoEstado);
+
         IState ChangeState(int _nuevoEstado_i);
         IState ChangeState(string _novoEstado_s);
-        IState ChangeState<T>();
+        IState ChangeState<S>();
+
+        IState ForceChangeState(int eNuevoEstado);
+        IState ForceChangeState(string eNuevoEstado);
+        IState ForceChangeState<S>();
 
         void AgregarEstadoPersistente(IState estado);
         void RemoverEstadoPersistente(IState estado);
@@ -182,29 +189,7 @@ namespace Sui.Machine
                 if (_estadoActual == value)
                     return;
 
-                if (_estadoActual != null)
-                {
-                    _estadoActual.GestionSalir(this);
-                    if (!_estadoActual.F_CambioExit_b(value)) { _estadoActual.Exit(); }
-                    _estadoActual.GestionTrasSalir(this);
-
-                    _estadoActual.enabled = false;
-                }
-
-                var _estadoAnterior = _estadoActual;
-                _estadoActual = value;
-
-                if (!_go.activeInHierarchy)
-                {
-                    Debug.LogWarning($"({_go.name}->MachineState): The GameObject is: Disable.");
-                }
-
-                _estadoActual.enabled = true;
-                OnStateChanged?.Invoke(_estadoActual);
-
-                _estadoActual.GestionEntrar(this);
-                if (!_estadoActual.F_CambioEnter_b(_estadoAnterior)) { _estadoActual.Enter(); }
-                _estadoActual.GestionTrasEntrar(this);
+                manejarCambioEstado(value);
 
                 ActualizarTransiciones();
             }
@@ -413,6 +398,41 @@ namespace Sui.Machine
 
 
         // ***********************( Metodos de Estados )*********************** //
+        void manejarEntradaEstado(IState eNovoEstado)
+        {
+            if (_estadoActual != null)
+            {
+                _estadoActual.GestionSalir(this);
+                if (!_estadoActual.F_CambioExit_b(eNovoEstado)) { _estadoActual.Exit(); }
+                _estadoActual.GestionTrasSalir(this);
+
+                _estadoActual.enabled = false;
+            }
+        }
+        void manejarSalidaEstado(IState eAnteriorEstado)
+        {
+            _estadoActual.enabled = true;
+            OnStateChanged?.Invoke(_estadoActual);
+
+            _estadoActual.GestionEntrar(this);
+            if (!_estadoActual.F_CambioEnter_b(eAnteriorEstado)) { _estadoActual.Enter(); }
+            _estadoActual.GestionTrasEntrar(this);
+        }
+        void manejarCambioEstado(IState eNovoEstado)
+        {
+            manejarEntradaEstado(eNovoEstado);
+
+            var _estadoAnterior = _estadoActual;
+            _estadoActual = eNovoEstado;
+
+            if (!_go.activeInHierarchy)
+            {
+                Debug.LogWarning($"({_go.name}->MachineState): The GameObject is: Disable.");
+            }
+
+            manejarSalidaEstado(_estadoAnterior);
+        }
+
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Cambia el estado actual de la máquina de estados.<br />
@@ -422,10 +442,10 @@ namespace Sui.Machine
         /// <param name="_nuevoEstado_i">Es: Posicion en int del 'estadosPosibles' <br /> En: Position in int of 'PossibleStates'</param>
         public IState ChangeState(int _nuevoEstado_i)
         {
-            if (!cambiarEstado(_nuevoEstado_i, out var _novoState_obj))
+            if (!cambiarEstado(_nuevoEstado_i, out var novoState))
                 return null;
 
-            return _novoState_obj;
+            return novoState;
         }
         /// <summary>
         /// ___________________( Español )___________________<br />
@@ -444,11 +464,7 @@ namespace Sui.Machine
                 Debug.LogError("(MachineState -> ChangeState): The name of the new state is null or empty.");
                 return null;
             }
-
-            if (!cambiarEstado(GetIndex(_novoEstado_s), out var _novoState_obj))
-                return null;
-
-            return _novoState_obj;
+            return ChangeState(GetIndex(_novoEstado_s));
         }
         /// <summary>
         /// ___________________( Español )___________________<br />
@@ -457,48 +473,110 @@ namespace Sui.Machine
         /// Changes the current state to the respective.<br />
         /// </summary>
         /// <returns>Es: Retorna el nuevo estado cambiado <br />En: Returns the new changed state</returns>
-        /// <typeparam name="T">Es: Tipo del estado a cambiar <br />En: Type of the state to change</typeparam>
-        public IState ChangeState<T>()
+        /// <typeparam name="S">Es: Tipo del estado a cambiar <br />En: Type of the state to change</typeparam>
+        public IState ChangeState<S>()
         {
-            return ChangeState(GetIndex(typeof(T).Name));
+            return ChangeState(GetIndex(typeof(S).Name));
         }
 
+        private bool darmeNuevoEstado(int eNuevoEstado, out IState eSalida)
+        {
+            eSalida = null;
+            if (eNuevoEstado != -1)
+            {
+                eSalida = _estadosPosibles[eNuevoEstado];
+                if (eSalida == null)
+                {
+                    Debug.LogError($"({_go.name}->MachineState -> (internal)ChangeState): Attempt to change state null");
+                    return false;
+                }
+            }
+            return true;
+        }
 
-        /// <summary>
-        /// If you are not the MachinState developer, NEVER use anything in Spanish.
-        /// </summary>
-        /// <param name="_nuevoEstado_i">'int' del estado a cambiar</param>
-        /// <param name="_salida">nuevo estado al cambiado</param>
-        /// <returns>false si no llego a cambiar</returns>
-        private bool cambiarEstado(int _nuevoEstado_i, out IState _salida)
+        private bool cambiarNuevoEstado(int eNuevoEstado, out IState _salida)
         {
             _salida = null;
 
             if (_estadosPosibles == null)
                 return false;
 
-            if (_nuevoEstado_i < 0 || _nuevoEstado_i >= _estadosPosibles.Count)
+            if (eNuevoEstado < -1 || eNuevoEstado >= _estadosPosibles.Count)
             {
                 Debug.LogError($"({_go.name}->MachineState -> (internal)ChangeState): The index of the new state is out of range.");
                 return false;
             }
 
-            IState _posibleNovoEstado = _estadosPosibles[_nuevoEstado_i];
-            if (_posibleNovoEstado == null)
-            {
-                Debug.LogError($"({_go.name}->MachineState -> (internal)ChangeState): Attempt to change state null");
-                return false;
-            }
-
-            if (State == _posibleNovoEstado)
+            if (!darmeNuevoEstado(eNuevoEstado, out IState _posibleNovoEstado))
             {
                 return false;
             }
+            return true;
+        }
 
-            State = _posibleNovoEstado;
+        /// <summary>
+        /// If you are not the MachinState developer, NEVER use anything in Spanish.
+        /// </summary>
+        /// <param name="eNuevoEstado">'int' del estado a cambiar</param>
+        /// <param name="_salida">nuevo estado al cambiado</param>
+        /// <returns>false si no llego a cambiar</returns>
+        private bool cambiarEstado(int eNuevoEstado, out IState _salida)
+        {
+            _salida = null;
+
+            if (!cambiarNuevoEstado(eNuevoEstado, out IState lNovo))
+            {
+                return false;
+            }
+
+            State = lNovo;
             _salida = State;
             return true;
         }
+
+        /// </summary>
+        /// <param name="eNuevoEstado">'int' del estado a cambiar</param>
+        /// <param name="_salida">nuevo estado al cambiado</param>
+        /// <returns>false si no llego a cambiar</returns>
+        private bool cambiarEstadoForzado(int eNuevoEstado, out IState _salida)
+        {
+            _salida = null;
+
+            if (!cambiarNuevoEstado(eNuevoEstado, out IState lNovo))
+            {
+                return false;
+            }
+
+            manejarCambioEstado(lNovo);
+            ActualizarTransiciones();
+            _salida = State;
+            return true;
+        }
+
+
+        public IState ForceChangeState(int eNuevoEstado)
+        {
+            if (!cambiarEstadoForzado(eNuevoEstado, out IState lNovo))
+                return null;
+
+            return lNovo;
+        }
+
+        public IState ForceChangeState(string eNuevoEstado)
+        {
+            if (string.IsNullOrEmpty(eNuevoEstado))
+            {
+                Debug.LogError("(MachineState -> ForceChangeState): The name of the new state is null or empty.");
+                return null;
+            }
+            return ForceChangeState(GetIndex(eNuevoEstado));
+        }
+
+        public IState ForceChangeState<S>()
+        {
+            return ForceChangeState(GetIndex(typeof(S).Name));
+        }
+
 
         internal void GestionarEstado(IState e_estado)
         {
@@ -783,7 +861,7 @@ namespace Sui.Machine
         {
             if (estado == null)
             {
-                Debug.LogError($"({_go.name}->MachineState): El estado proporcionado es null.");
+                //Debug.LogError($"({_go.name}->MachineState): El estado proporcionado es null.");
                 return -1;
             }
 
