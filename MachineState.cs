@@ -850,6 +850,10 @@ namespace Sui.Machine
         }
 
         // ***********************( Indices )*********************** //
+        public int GetIndex()
+        {
+            return GetIndex(State);
+        }
         /// <summary>
         /// ___________________( Español )___________________<br />
         /// Obtiene el índice del estado en la lista de estados posibles.<br />
