@@ -95,6 +95,7 @@ namespace Sui.Machine
     {
         // ***********************( ListState )*********************** //
         // TODO: sacar al namespace para que cualquiero pueda usarlo y asegurar que no haya problemas al hacerlo.
+        // TODO: Permitir que al modificarlo cualquier Maquina con esta lista tambien cambie.
         private class ListState : List<IState>
         {
             private readonly MachineState<O> _machineState;
