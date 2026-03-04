@@ -104,10 +104,10 @@ namespace Sui.Machine
             this.NewOptions = NewOptions;
             this.OldOptions = OldOptions;
         }
-        public ChangeParam(ChangeStateOptions NewOptions)
+        public ChangeParam(ChangeStateOptions eOptions)
         {
-            this.NewOptions = NewOptions;
-            this.OldOptions = ChangeStateOptions.None;
+            this.NewOptions = eOptions;
+            this.OldOptions = eOptions;
         }
 
 
