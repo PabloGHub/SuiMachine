@@ -22,6 +22,8 @@ namespace Sui.Machine
         Component ThisComponent { get; set; }
         bool Active { get; }
 
+        ChangeStateOptions ChangeOptions { get; set; }
+
         // ***********************( Gestion y Control )*********************** //
         int Identificador { get; set; }
         int Id { get; }
@@ -46,9 +48,11 @@ namespace Sui.Machine
         void EndTrasition(IState eProximo);
 
         // ***********************( Metodos de Maquina )*********************** //
-        IState ChangeState(int eEstado);
-        IState ChangeState(IState eEstado);
-        IState ChangeState<T>();
+        (IState newS, IState oldS) ChangeState(int eEstado);
+        (IState newS, IState oldS) ChangeState(IState eEstado);
+        (IState newS, IState oldS) ChangeState<T>();
+
+        // TODO: ForceChanged.
 
         int GetMyIndex();
         int GetIndex(string eName);
@@ -72,6 +76,9 @@ namespace Sui.Machine
         void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour;
         void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour;
         void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour;
+
+        // void JumpEnter();
+        // void JumpExit();
 
         // ***********************( Metodos Funcionales )*********************** //
         bool F_CambioEnter_b<S>(S eEstado) where S : IState;
@@ -141,6 +148,8 @@ namespace Sui.Machine
 
         IMachineState _maquina;
 
+        private ChangeStateOptions _opcionesCambio = ChangeStateOptions.None;
+
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
         /// ___________________( Español )___________________<br />
@@ -191,6 +200,12 @@ namespace Sui.Machine
             set => _maquina = value;
         }
 
+        public ChangeStateOptions ChangeOptions
+        {
+            get => _opcionesCambio;
+            set => _opcionesCambio = value;
+        }
+
         // ***********************( Gestion y Control )*********************** //
         // --- Gestion.
         private int _identificador_i = -1;
@@ -236,7 +251,6 @@ namespace Sui.Machine
         {
             get { return _primeraVez_bandera; }
         }
-
 
 
         // ***********************( Eventos )*********************** //
@@ -336,15 +350,15 @@ namespace Sui.Machine
         }
 
         // ***********************( Metodos de Maquina )*********************** //
-        public IState ChangeState(int eEstado)
+        public (IState newS, IState oldS) ChangeState(int eEstado)
         {
             return Machine.ChangeState(eEstado);
         }
-        public IState ChangeState(IState eEstado)
+        public (IState newS, IState oldS) ChangeState(IState eEstado)
         {
             return Machine.ChangeState(Machine.GetIndex(eEstado));
         }
-        public IState ChangeState<T>()
+        public (IState newS, IState oldS) ChangeState<T>()
         {
             return Machine.ChangeState<T>();
         }
@@ -566,6 +580,8 @@ namespace Sui.Machine
 
         IMachineState _maquina;
 
+        private ChangeStateOptions _opcionesCambio = ChangeStateOptions.None;
+
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
         /// ___________________( Español )___________________<br />
@@ -613,6 +629,12 @@ namespace Sui.Machine
         {
             get => _maquina;
             set => _maquina = value;
+        }
+
+        public ChangeStateOptions ChangeOptions
+        {
+            get => _opcionesCambio;
+            set => _opcionesCambio = value;
         }
 
         // ***********************( Gestion y Control )*********************** //
@@ -765,15 +787,15 @@ namespace Sui.Machine
 
 
         // ***********************( Metodos de Maquina )*********************** //
-        public IState ChangeState(int eEstado)
+        public (IState newS, IState oldS) ChangeState(int eEstado)
         {
             return Machine.ChangeState(eEstado);
         }
-        public IState ChangeState(IState eEstado)
+        public (IState newS, IState oldS) ChangeState(IState eEstado)
         {
             return Machine.ChangeState(Machine.GetIndex(eEstado));
         }
-        public IState ChangeState<T>()
+        public (IState newS, IState oldS) ChangeState<T>()
         {
             return Machine.ChangeState<T>();
         }
