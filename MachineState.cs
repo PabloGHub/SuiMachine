@@ -997,20 +997,16 @@ namespace Sui.Machine
             return GetIndex(typeof(S).Name);
         }
 
-        /// <summary>
-        /// En proceso de fabricacion.
-        /// </summary>
+
         public IState GetState(int _indice_i)
         {
-            return null;
+            return _estadosPosibles[_indice_i];
         }
 
-        /// <summary>
-        /// En proceso de fabricacion.
-        /// </summary>
+
         public string GetNameState(int _indice_i)
         {
-            return null;
+            return _estadosPosibles[_indice_i].GetType().ToString();
         }
 
         // ***********************( Serealizacion )*********************** //
