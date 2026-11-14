@@ -1006,7 +1006,7 @@ namespace Sui.Machine
 
         public string GetNameState(int _indice_i)
         {
-            return _estadosPosibles[_indice_i].GetType().ToString();
+            return _estadosPosibles[_indice_i].GetType().Name;
         }
 
         // ***********************( Serealizacion )*********************** //
