@@ -6,101 +6,24 @@ using UnityEngine;
 
 namespace Sui.Machine
 {
-    // TODO: Implementar de forma explicita muchas funciones internas.
-    public interface IState
-    {
-        // ***********************( Getter, Setters e Indesxadores )*********************** //
-        MonoBehaviour Owner { get; }
+    /*
+    In English, so they don’t go whining to me.
+    -- Variables:
+    starts: m_ = public, Recommended to use getters and setters
+    starts: _ = private, NOT local
+    starts: lowercase = private, local
+    starts: "p" (lowercase) = local incoming parameter
+    starts: uppercase = public
+    starts: Z_ = Designed for the Unity Editor 
+    -- Functions & Class:
+    starts: uppercase = public
+    starts: lowercase = private
+    starts: __ = public, Not recommended
+    -- All:
+    contain: _internal = divided not used final programer
+    */
 
-        MonoBehaviour Duenno { get; set; }
 
-        O GetOwner<O>() where O : MonoBehaviour => Owner as O;
-
-        IMachineState Machine { get; set; }
-
-        int Index { get; set; }
-        Component ThisComponent { get; set; }
-        bool Active { get; }
-
-        ChangeStateOptions ChangeOptions { get; set; }
-
-        // ***********************( Gestion y Control )*********************** //
-        int Identificador { get; set; }
-        int Id { get; }
-        bool InFirstEnter { get; }
-
-        bool enabled { get; set; }
-
-        // ***********************( Eventos )*********************** //
-        event Action OnFirtsEnter;
-        event Action<int> OnChangeId;
-
-        event Action<int> ChangeInt;
-        event Action<IState> ChangeIState;
-
-        // ***********************( Contructores )*********************** //
-        void ConstructorGestion<O>(MachineState<O> maquina) where O : MonoBehaviour;
-        void Init<T>(T owner);
-        void Init();
-
-        // ***********************( Metodos de Transiciones )*********************** //
-        void EndTransition(int eProximo);
-        void EndTrasition(IState eProximo);
-
-        // ***********************( Metodos de Maquina )*********************** //
-        (IState newS, IState oldS) ChangeState(int eEstado);
-        (IState newS, IState oldS) ChangeState(IState eEstado);
-        (IState newS, IState oldS) ChangeState<T>();
-
-        // TODO: ForceChanged.
-
-        int GetMyIndex();
-        int GetIndex(string eName);
-        int GetIndex(IState eEstado);
-        int GetIndex<S>();
-
-        IState GetState(int eIndex);
-        string GetNameState(int eIndex);
-
-        // ***********************( Control de direccion )*********************** //
-        void EnterFrom<S>(Action _fun) where S : IState;
-        void EnterFrom(Type _tipo, Action _fun);
-
-        void AlEntrarEstadosPosibles<O>(MachineState<O> maquina) where O : MonoBehaviour;
-
-        void Enter();
-        void Exit();
-
-        // ***********************( Metodos de Control )*********************** //
-        void GestionEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour;
-        void GestionTrasEntrar<O>(MachineState<O> maquina) where O : MonoBehaviour;
-        void GestionSalir<O>(MachineState<O> maquina) where O : MonoBehaviour;
-        void GestionTrasSalir<O>(MachineState<O> maquina) where O : MonoBehaviour;
-
-        // void JumpEnter();
-        // void JumpExit();
-
-        // ***********************( Metodos Funcionales )*********************** //
-        bool F_CambioEnter_b<S>(S eEstado) where S : IState;
-        bool F_CambioExit_b<S>(S eEstado) where S : IState;
-        int SaveIndex<O>(MachineState<O> maquina) where O : MonoBehaviour;
-    }
-
-    public interface IStateMonoBehaviour
-    {
-        void DestroyThis();
-    }
-
-    public interface IStateLittle
-    {
-        void Update();
-        void FixedUpdate();
-    }
-
-    public interface ITransitionState
-    {
-        IEnumerator Transition();
-    }
 
     // Puto Unity.
     public abstract class Intemediario_Little : IStateLittle
@@ -132,23 +55,22 @@ namespace Sui.Machine
             }
         }
 
-        MonoBehaviour IState.Duenno
+        MonoBehaviour IState.Owner_internal
         {
             get => _owner;
             set => _owner = value;
         }
 
-        private int _indice_i = -1;
-        private Component _esteComponente = null;
+        private int _index = -1;
 
         private Coroutine _transicion;
 
-        private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
-        private Dictionary<Type, Action> _salirDesde { get; set; } = new();
+        private Dictionary<Type, Action> _enterFrom { get; set; } = new();
+        private Dictionary<Type, Action> _exitFrom { get; set; } = new();
 
-        IMachineState _maquina;
+        IMachineState _machine;
 
-        private ChangeStateOptions _opcionesCambio = ChangeStateOptions.None;
+        private ChangeStateOptions _opt = ChangeStateOptions.None;
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
@@ -175,18 +97,13 @@ namespace Sui.Machine
         /// <returns>Owner but "O" type</returns>
         public O GetOwnerForMachine<O>() where O : MonoBehaviour
         {
-            return _maquina.GetOwner<O>();
+            return _machine.GetOwner<O>();
         }
 
         public int Index
         {
-            get => _indice_i;
-            set => _indice_i = value;
-        }
-        public Component ThisComponent
-        {
-            get => _esteComponente;
-            set => _esteComponente = value;
+            get => _index;
+            set => _index = value;
         }
         public bool Active
         {
@@ -196,19 +113,19 @@ namespace Sui.Machine
 
         public IMachineState Machine
         {
-            get => _maquina;
-            set => _maquina = value;
+            get => _machine;
+            set => _machine = value;
         }
 
         public ChangeStateOptions ChangeOptions
         {
-            get => _opcionesCambio;
-            set => _opcionesCambio = value;
+            get => _opt;
+            set => _opt = value;
         }
 
         // ***********************( Gestion y Control )*********************** //
         // --- Gestion.
-        private int _identificador_i = -1;
+        private int _identifier = -1;
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
@@ -216,40 +133,40 @@ namespace Sui.Machine
         {
             get
             {
-                return _identificador_i;
+                return _identifier;
             }
             set
             {
-                _identificador_i = value;
-                OnChangeId?.Invoke(_identificador_i);
+                _identifier = value;
+                OnChangeId?.Invoke(_identifier);
             }
         }
         public int Id
         {
             get
             {
-                return _identificador_i;
+                return _identifier;
             }
         }
 
-        // Obsoleto: Puedes llamar a Start() de Unity, Pero tu te fias? porque yo no.
-        private bool _primeraVez_bandera = true;
-        internal bool EntrarPrimeraVez
+
+        private bool _first_flag = true;
+        internal bool FirstOne_internal
         {
             get
             {
-                _primeraVez_bandera = false;
-                return _primeraVez_bandera;
+                _first_flag = false;
+                return _first_flag;
             }
             set
             {
                 Debug.LogWarning($"(StateLittle->StateBase): 'InFirstEnter' -> {value}, Warning.");
-                _primeraVez_bandera = value;
+                _first_flag = value;
             }
         }
         public bool InFirstEnter
         {
-            get { return _primeraVez_bandera; }
+            get { return _first_flag; }
         }
 
 
@@ -264,37 +181,37 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.ConstructorGestion<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManagerBuilder_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            _entrarDesde = new Dictionary<Type, Action>();
-            _salirDesde = new Dictionary<Type, Action>();
+            _enterFrom = new Dictionary<Type, Action>();
+            _exitFrom = new Dictionary<Type, Action>();
 
             //Debug.Log($"({gameObject.name}:StateBase): ConstructorGestion -> maquina:{maquina.GetType().FullName}.");
 
             // --- Atributos
-            var _metodos = GetType().GetMethods(
+            var methods = GetType().GetMethods(
                 System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.Public |
                 System.Reflection.BindingFlags.NonPublic);
 
-            foreach (var _metodo in _metodos)
+            foreach (var method in methods)
             {
-                foreach (var _atributo in _metodo.GetCustomAttributes(true))
+                foreach (var atr in method.GetCustomAttributes(true))
                 {
-                    if (_atributo is OnEnterFromAttribute _entrada)
+                    if (atr is OnEnterFromAttribute enter)
                     {
-                        Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        EnterFrom(_entrada.Type, _fun);
+                        Action fun = (Action)Delegate.CreateDelegate(typeof(Action), this, method);
+                        EnterFrom(enter.Type, fun);
                     }
-                    else if (_atributo is OnExitToAttribute _salida)
+                    else if (atr is OnExitToAttribute exit)
                     {
-                        Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        ExitTo(_salida.Type, _fun);
+                        Action fun = (Action)Delegate.CreateDelegate(typeof(Action), this, method);
+                        ExitTo(exit.Type, fun);
                     }
                 }
             }
         }
-        public virtual void Init<O>(O owner) { }
+        public virtual void Init<O>(O pOwner) { }
         public virtual void Init() { }
 
         // ***********************( Control de direccion )*********************** //
@@ -312,13 +229,13 @@ namespace Sui.Machine
         /// -----------------------<br />
         /// Note: You can only have one function per enter state.
         /// </summary>
-        public void EnterFrom<S>(Action _fun) where S : IState
+        public void EnterFrom<S>(Action pFun) where S : IState
         {
-            _entrarDesde[typeof(S)] = _fun;
+            _enterFrom[typeof(S)] = pFun;
         }
-        public void EnterFrom(Type _tipo, Action _fun)
+        public void EnterFrom(Type pType, Action pFun)
         {
-            _entrarDesde[_tipo] = _fun;
+            _enterFrom[pType] = pFun;
         }
 
 
@@ -330,13 +247,13 @@ namespace Sui.Machine
         /// -La funcion con la clabe a S se ejecutara.
         /// <br />-----------------------
         /// </summary>
-        public void ExitTo<S>(Action _fun) where S : IState
+        public void ExitTo<S>(Action pFun) where S : IState
         {
-            _salirDesde[typeof(S)] = _fun;
+            _exitFrom[typeof(S)] = pFun;
         }
-        public void ExitTo(Type _tipo, Action _fun)
+        public void ExitTo(Type pType, Action pFun)
         {
-            _salirDesde[_tipo] = _fun;
+            _exitFrom[pType] = pFun;
         }
 
         // ***********************( Metodos de Transiciones )*********************** //
@@ -350,13 +267,13 @@ namespace Sui.Machine
         }
 
         // ***********************( Metodos de Maquina )*********************** //
-        public (IState newS, IState oldS) ChangeState(int eEstado)
+        public (IState newS, IState oldS) ChangeState(int pState)
         {
-            return Machine.ChangeState(eEstado);
+            return Machine.ChangeState(pState);
         }
-        public (IState newS, IState oldS) ChangeState(IState eEstado)
+        public (IState newS, IState oldS) ChangeState(IState pState)
         {
-            return Machine.ChangeState(Machine.GetIndex(eEstado));
+            return Machine.ChangeState(Machine.GetIndex(pState));
         }
         public (IState newS, IState oldS) ChangeState<T>()
         {
@@ -365,74 +282,74 @@ namespace Sui.Machine
 
         public int GetMyIndex()
         {
-            return _indice_i;
+            return _index;
         }
-        public int GetIndex(string eName)
+        public int GetIndex(string pName)
         {
-            return Machine.GetIndex(eName);
+            return Machine.GetIndex(pName);
         }
-        public int GetIndex(IState eEstado)
+        public int GetIndex(IState pState)
         {
-            return Machine.GetIndex(eEstado);
+            return Machine.GetIndex(pState);
         }
         public int GetIndex<S>()
         {
             return Machine.GetIndex<S>();
         }
 
-        public IState GetState(int eIndex)
+        public IState GetState(int pIndex)
         {
-            return Machine.GetState(eIndex);
+            return Machine.GetState(pIndex);
         }
-        public string GetNameState(int eIndex)
+        public string GetNameState(int pIndex)
         {
-            return Machine.GetNameState(eIndex);
+            return Machine.GetNameState(pIndex);
         }
 
         // ***********************( Metodos de Control )*********************** //
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManageEnter_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            SaveIndex(maquina);
+            SaveIndex(pMachine);
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionTrasEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManageAfterEnter_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            if (EntrarPrimeraVez)
+            if (FirstOne_internal)
                 OnFirtsEnter?.Invoke();
 
-            if (this is ITransitionState estado)
+            if (this is ITransitionState pState)
             {
-                _transicion = maquina.StartCoroutine(estado.Transition());
+                _transicion = pMachine.StartCoroutine(pState.Transition());
             }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManagerExit_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
             if (_transicion != null)
             {
-                maquina.StopCoroutine(ref _transicion);
+                pMachine.StopCoroutine(ref _transicion);
             }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionTrasSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManagerAfterExit_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
 
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.AlEntrarEstadosPosibles<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.OnEnteringPossibleStates_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            SaveIndex(maquina);
+            SaveIndex(pMachine);
         }
 
         // ---> usuario: 
@@ -486,20 +403,20 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// Si entra al estado desde uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        bool IState.F_CambioEnter_b<S>(S eEstado) // where S : IState
+        bool IState.ChangeEnter_internal<S>(S pState) // where S : IState
         {
-            if (eEstado == null)
+            if (pState == null)
             {
                 // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
-            if (_entrarDesde.Count() <= 0)
+            if (_enterFrom.Count() <= 0)
                 return false;
 
-            foreach (var item in _entrarDesde)
+            foreach (var item in _enterFrom)
             {
-                if (item.Key == eEstado.GetType())
+                if (item.Key == pState.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -512,20 +429,20 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        bool IState.F_CambioExit_b<S>(S eEstado) // where S : IState
+        bool IState.ChangeExit_internal<S>(S pState) // where S : IState
         {
-            if (eEstado == null)
+            if (pState == null)
             {
                 // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
-            if (_salirDesde.Count() <= 0)
+            if (_exitFrom.Count() <= 0)
                 return false;
 
-            foreach (var item in _salirDesde)
+            foreach (var item in _exitFrom)
             {
-                if (item.Key == eEstado.GetType())
+                if (item.Key == pState.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -535,10 +452,10 @@ namespace Sui.Machine
             return false;
         }
 
-        public int SaveIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public int SaveIndex<O>(MachineState<O> pMachine) where O : MonoBehaviour
         {
-            _indice_i = maquina.GetIndex(this);
-            return _indice_i;
+            _index = pMachine.GetIndex(this);
+            return _index;
         }
     }
 
@@ -564,23 +481,22 @@ namespace Sui.Machine
             }
         }
 
-        MonoBehaviour IState.Duenno
+        MonoBehaviour IState.Owner_internal
         {
             get => _owner;
             set => _owner = value;
         }
 
-        private int _indice_i = -1;
-        private Component _esteComponente = null;
+        private int _index = -1;
 
         private Coroutine _transicion;
 
-        private Dictionary<Type, Action> _entrarDesde { get; set; } = new();
-        private Dictionary<Type, Action> _salirDesde { get; set; } = new();
+        private Dictionary<Type, Action> _enterFrom { get; set; } = new();
+        private Dictionary<Type, Action> _exitFrom { get; set; } = new();
 
-        IMachineState _maquina;
+        IMachineState _machine;
 
-        private ChangeStateOptions _opcionesCambio = ChangeStateOptions.None;
+        private ChangeStateOptions _opt = ChangeStateOptions.None;
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         /// <summary>
@@ -607,18 +523,13 @@ namespace Sui.Machine
         /// <returns>Owner but "O" type</returns>
         public O GetOwnerForMachine<O>() where O : MonoBehaviour
         {
-            return _maquina.GetOwner<O>();
+            return _machine.GetOwner<O>();
         }
 
         public int Index
         {
-            get => _indice_i;
-            set => _indice_i = value;
-        }
-        public Component ThisComponent
-        {
-            get => _esteComponente;
-            set => _esteComponente = value;
+            get => _index;
+            set => _index = value;
         }
         public bool Active
         {
@@ -627,19 +538,19 @@ namespace Sui.Machine
 
         public IMachineState Machine
         {
-            get => _maquina;
-            set => _maquina = value;
+            get => _machine;
+            set => _machine = value;
         }
 
         public ChangeStateOptions ChangeOptions
         {
-            get => _opcionesCambio;
-            set => _opcionesCambio = value;
+            get => _opt;
+            set => _opt = value;
         }
 
         // ***********************( Gestion y Control )*********************** //
         // --- Gestion.
-        private int _identificador_i = -1;
+        private int _identifier = -1;
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
@@ -647,40 +558,40 @@ namespace Sui.Machine
         {
             get
             {
-                return _identificador_i;
+                return _identifier;
             }
             set
             {
-                _identificador_i = value;
-                OnChangeId?.Invoke(_identificador_i);
+                _identifier = value;
+                OnChangeId?.Invoke(_identifier);
             }
         }
         public int Id
         {
             get
             {
-                return _identificador_i;
+                return _identifier;
             }
         }
 
         // Obsoleto: Puedes llamar a Start() de Unity, Pero tu te fias? porque yo no.
-        private bool _primeraVez_bandera = true;
-        internal bool EntrarPrimeraVez
+        private bool _frist_flag = true;
+        internal bool FirstOne_internal
         {
             get
             {
-                _primeraVez_bandera = false;
-                return _primeraVez_bandera;
+                _frist_flag = false;
+                return _frist_flag;
             }
             set
             {
                 Debug.LogWarning($"({gameObject.name}:StateBase): 'InFirstEnter' -> {value}, Warning.");
-                _primeraVez_bandera = value;
+                _frist_flag = value;
             }
         }
         public bool InFirstEnter
         {
-            get { return _primeraVez_bandera; }
+            get { return _frist_flag; }
         }
 
 
@@ -696,40 +607,37 @@ namespace Sui.Machine
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.ConstructorGestion<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManagerBuilder_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            // Deberia funcionar pero hay que testealo pues tengo malas experiencias.
-            this.ThisComponent = this.GetComponent(this.GetType());
-
-            _entrarDesde = new Dictionary<Type, Action>();
-            _salirDesde = new Dictionary<Type, Action>();
+            _enterFrom = new Dictionary<Type, Action>();
+            _exitFrom = new Dictionary<Type, Action>();
 
             //Debug.Log($"({gameObject.name}:StateBase): ConstructorGestion -> maquina:{maquina.GetType().FullName}.");
 
             // --- Atributos
-            var _metodos = GetType().GetMethods(
+            var methods = GetType().GetMethods(
                 System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.Public |
                 System.Reflection.BindingFlags.NonPublic);
 
-            foreach (var _metodo in _metodos)
+            foreach (var method in methods)
             {
-                foreach (var _atributo in _metodo.GetCustomAttributes(true))
+                foreach (var atr in method.GetCustomAttributes(true))
                 {
-                    if (_atributo is OnEnterFromAttribute _entrada)
+                    if (atr is OnEnterFromAttribute enter)
                     {
-                        Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        EnterFrom(_entrada.Type, _fun);
+                        Action fun = (Action)Delegate.CreateDelegate(typeof(Action), this, method);
+                        EnterFrom(enter.Type, fun);
                     }
-                    else if (_atributo is OnExitToAttribute _salida)
+                    else if (atr is OnExitToAttribute exit)
                     {
-                        Action _fun = (Action)Delegate.CreateDelegate(typeof(Action), this, _metodo);
-                        ExitTo(_salida.Type, _fun);
+                        Action fun = (Action)Delegate.CreateDelegate(typeof(Action), this, method);
+                        ExitTo(exit.Type, fun);
                     }
                 }
             }
         }
-        public virtual void Init<O>(O owner) { }
+        public virtual void Init<O>(O pOwner) { }
         public virtual void Init() { }
 
         // ***********************( Control de direccion )*********************** //
@@ -747,13 +655,13 @@ namespace Sui.Machine
         /// -----------------------<br />
         /// Note: You can only have one function per enter state.
         /// </summary>
-        public void EnterFrom<S>(Action _fun) where S : IState
+        public void EnterFrom<S>(Action pFun) where S : IState
         {
-            _entrarDesde[typeof(S)] = _fun;
+            _enterFrom[typeof(S)] = pFun;
         }
-        public void EnterFrom(Type _tipo, Action _fun)
+        public void EnterFrom(Type pType, Action pFun)
         {
-            _entrarDesde[_tipo] = _fun;
+            _enterFrom[pType] = pFun;
         }
 
 
@@ -765,35 +673,35 @@ namespace Sui.Machine
         /// -La funcion con la clabe a S se ejecutara.
         /// <br />-----------------------
         /// </summary>
-        public void ExitTo<S>(Action _fun) where S : IState
+        public void ExitTo<S>(Action pFun) where S : IState
         {
-            _salirDesde[typeof(S)] = _fun;
+            _exitFrom[typeof(S)] = pFun;
         }
-        public void ExitTo(Type _tipo, Action _fun)
+        public void ExitTo(Type pType, Action pFun)
         {
-            _salirDesde[_tipo] = _fun;
+            _exitFrom[pType] = pFun;
         }
 
         // ***********************( Metodos de Transiciones )*********************** //
-        public void EndTransition(int eProximo)
+        public void EndTransition(int pNext)
         {
-            ChangeInt?.Invoke(eProximo);
+            ChangeInt?.Invoke(pNext);
         }
-        public void EndTrasition(IState eProximo)
+        public void EndTrasition(IState pNext)
         {
-            ChangeIState?.Invoke(eProximo);
+            ChangeIState?.Invoke(pNext);
         }
 
 
 
         // ***********************( Metodos de Maquina )*********************** //
-        public (IState newS, IState oldS) ChangeState(int eEstado)
+        public (IState newS, IState oldS) ChangeState(int pState)
         {
-            return Machine.ChangeState(eEstado);
+            return Machine.ChangeState(pState);
         }
-        public (IState newS, IState oldS) ChangeState(IState eEstado)
+        public (IState newS, IState oldS) ChangeState(IState pState)
         {
-            return Machine.ChangeState(Machine.GetIndex(eEstado));
+            return Machine.ChangeState(Machine.GetIndex(pState));
         }
         public (IState newS, IState oldS) ChangeState<T>()
         {
@@ -802,75 +710,74 @@ namespace Sui.Machine
 
         public int GetMyIndex()
         {
-            return _indice_i;
+            return _index;
         }
-        public int GetIndex(string eName)
+        public int GetIndex(string pName)
         {
-            return Machine.GetIndex(eName);
+            return Machine.GetIndex(pName);
         }
-        public int GetIndex(IState eEstado)
+        public int GetIndex(IState pState)
         {
-            return Machine.GetIndex(eEstado);
+            return Machine.GetIndex(pState);
         }
         public int GetIndex<S>()
         {
             return Machine.GetIndex<S>();
         }
 
-        public IState GetState(int eIndex)
+        public IState GetState(int pIndex)
         {
-            return Machine.GetState(eIndex);
+            return Machine.GetState(pIndex);
         }
-        public string GetNameState(int eIndex)
+        public string GetNameState(int pIndex)
         {
-            return Machine.GetNameState(eIndex);
+            return Machine.GetNameState(pIndex);
         }
 
         // ***********************( Metodos de Control )*********************** //
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManageEnter_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            ThisComponent = GetComponent(GetType());
-            SaveIndex(maquina);
+            SaveIndex(pMachine);
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionTrasEntrar<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManageAfterEnter_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            if (EntrarPrimeraVez)
+            if (FirstOne_internal)
                 OnFirtsEnter?.Invoke();
 
-            if (this is ITransitionState estado)
+            if (this is ITransitionState pState)
             {
-                _transicion = StartCoroutine(estado.Transition());
+                _transicion = StartCoroutine(pState.Transition());
             }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManagerExit_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
             if (_transicion != null)
             {
-                maquina.StopCoroutine(ref _transicion);
+                pMachine.StopCoroutine(ref _transicion);
             }
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.GestionTrasSalir<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.ManagerAfterExit_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
 
         }
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        void IState.AlEntrarEstadosPosibles<O>(MachineState<O> maquina) // where O : MonoBehaviour
+        void IState.OnEnteringPossibleStates_internal<O>(MachineState<O> pMachine) // where O : MonoBehaviour
         {
-            SaveIndex(maquina);
+            SaveIndex(pMachine);
         }
 
         // ---> usuario: 
@@ -924,20 +831,20 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// Si entra al estado desde uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        bool IState.F_CambioEnter_b<S>(S eEstado) // where S : IState
+        bool IState.ChangeEnter_internal<S>(S pMachine) // where S : IState
         {
-            if (eEstado == null)
+            if (pMachine == null)
             {
                 // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
-            if (_entrarDesde.Count() <= 0)
+            if (_enterFrom.Count() <= 0)
                 return false;
 
-            foreach (var item in _entrarDesde)
+            foreach (var item in _enterFrom)
             {
-                if (item.Key == eEstado.GetType())
+                if (item.Key == pMachine.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -950,20 +857,20 @@ namespace Sui.Machine
         /// If you are not the MachinState developer, NEVER use anything in Spanish.<br /><br />
         /// si sale del estado hacia uno especificado anteriormente, se ejecutara la funcion asociada a ese estado.
         /// </summary>
-        bool IState.F_CambioExit_b<S>(S eEstado) //  where S : IState
+        bool IState.ChangeExit_internal<S>(S pState) //  where S : IState
         {
-            if (eEstado == null)
+            if (pState == null)
             {
                 // Debug.LogError($"(StateBase): El estado pasado es nulo.");
                 return false;
             }
 
-            if (_salirDesde.Count() <= 0)
+            if (_exitFrom.Count() <= 0)
                 return false;
 
-            foreach (var item in _salirDesde)
+            foreach (var item in _exitFrom)
             {
-                if (item.Key == eEstado.GetType())
+                if (item.Key == pState.GetType())
                 {
                     item.Value?.Invoke();
                     return true;
@@ -973,10 +880,10 @@ namespace Sui.Machine
             return false;
         }
 
-        public int SaveIndex<O>(MachineState<O> maquina) where O : MonoBehaviour
+        public int SaveIndex<O>(MachineState<O> pMachine) where O : MonoBehaviour
         {
-            _indice_i = maquina.GetIndex(this);
-            return _indice_i;
+            _index = pMachine.GetIndex(this);
+            return _index;
         }
 
         // ***********************( Metodos Gestion )*********************** //
