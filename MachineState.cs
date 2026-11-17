@@ -2,7 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+
+
+#if UNITY_5_3_OR_NEWER
 using UnityEngine;
+#endif
 
 namespace Sui.Machine
 {
@@ -195,7 +200,7 @@ namespace Sui.Machine
                 {
                     if (value == null)
                     {
-                        Debug.LogError($"({_machineState._go.GetType().Name}->MachineState): the collection is null.");
+                        Debug.LogError($"({_machineState._host.GetType().Name}->MachineState): the collection is null.");
                         return;
                     }
                     base.Clear();
@@ -230,9 +235,8 @@ namespace Sui.Machine
         private ListState _persistentStates;
 
         private Dictionary<Func<bool>, IState> _transitions = new();
-        private GameObject _go; // object
+        private object _host;
         private O _owner; // Script donde fue instanciada la maquina de estados.
-        private GestionadorMachineState _manager;
 
         // --- Control.
         private bool _enable = true;
@@ -284,7 +288,7 @@ namespace Sui.Machine
             {
                 if (_indice_i < 0 || _indice_i >= _possibleStates.Count)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): El índice de estado es inválido.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): El índice de estado es inválido.");
                     return null;
                 }
                 return _possibleStates[_indice_i];
@@ -293,7 +297,7 @@ namespace Sui.Machine
             {
                 if (_indice_i < 0)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): El índice de estado es inválido.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): El índice de estado es inválido.");
                     return;
                 }
                 _possibleStates[_indice_i] = value;
@@ -312,7 +316,7 @@ namespace Sui.Machine
             {
                 if (_estado == null)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): El estado proporcionado es null.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): El estado proporcionado es null.");
                     return -1;
                 }
                 return GetIndex(_estado);
@@ -321,7 +325,7 @@ namespace Sui.Machine
             {
                 if (_estado == null)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): El estado proporcionado es null.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): El estado proporcionado es null.");
                     return;
                 }
                 _possibleStates[value] = _estado;
@@ -342,13 +346,13 @@ namespace Sui.Machine
             {
                 if (value == null)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): La lista de estados posibles es null.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): La lista de estados posibles es null.");
                     return;
                 }
 
                 if (value.Count == 0)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): La lista de estados posibles no puede estar vacía.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): La lista de estados posibles no puede estar vacía.");
                     return;
                 }
 
@@ -373,13 +377,13 @@ namespace Sui.Machine
             {
                 if (value == null)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): The passed list of states is null.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): The passed list of states is null.");
                     return;
                 }
 
                 if (value.Count == 0)
                 {
-                    Debug.LogError($"({_go.GetType().Name}->MachineState): The passed list of states cannot be empty.");
+                    Debug.LogError($"({_host.GetType().Name}->MachineState): The passed list of states cannot be empty.");
                     return;
                 }
 
@@ -582,7 +586,7 @@ namespace Sui.Machine
 
             if (eNovo == null)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState -> (internal)ChangeState): Attempt to change state null");
+                Debug.LogError($"({_host.GetType().Name}->MachineState -> (internal)ChangeState): Attempt to change state null");
                 return false;
             }
 
@@ -598,7 +602,7 @@ namespace Sui.Machine
 
             if (eNuevoEstado < -1 || eNuevoEstado >= _possibleStates.Count)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState -> (internal)ChangeState): The index of the new state is out of range.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState -> (internal)ChangeState): The index of the new state is out of range.");
                 return false;
             }
 
@@ -702,12 +706,12 @@ namespace Sui.Machine
         {
             if (_novoLista == null)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState): La nueva lista de estados posibles es nula.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState): La nueva lista de estados posibles es nula.");
                 return null;
             }
             if (_novoLista.Count == 0)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState): La nueva lista de estados posibles esta vacía.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState): La nueva lista de estados posibles esta vacía.");
                 return null;
             }
 
@@ -801,6 +805,18 @@ namespace Sui.Machine
         }
 
 
+        // ***********************( Metodos Update )*********************** //
+        public void Update()
+        {
+            if (State != null && State is IStateLittle noMono)
+                noMono.Update();
+        }
+        public void PhysicsUpdate()
+        {
+            if (State != null && State is IStateLittle noMono)
+                noMono.PhysicsUpdate();
+        }
+
 
         // ***********************( Metodos Transiciones )*********************** //
         public bool AddTransition(Func<bool> condition, int stateDestine)
@@ -821,7 +837,7 @@ namespace Sui.Machine
 
             if (e_estadoDestino_i < 0 || e_estadoDestino_i >= _possibleStates.Count)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState): The destination state index is invalid in AddTransition.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState): The destination state index is invalid in AddTransition.");
                 return false;
             }
 
@@ -875,14 +891,14 @@ namespace Sui.Machine
         {
             if (estado == null)
             {
-                Debug.Log($"({_go.GetType().Name}->GetIndex): return -1 for null state.");
+                Debug.Log($"({_host.GetType().Name}->GetIndex): return -1 for null state.");
                 return -1;
             }
 
             int indice = _possibleStates.IndexOf(estado);
             if (indice == -1)
             {
-                Debug.LogWarning($"({_go.GetType().Name}->GetIndex): El estado {estado.GetType().Name} no se encuentra en la lista de estados posibles.");
+                Debug.LogWarning($"({_host.GetType().Name}->GetIndex): El estado {estado.GetType().Name} no se encuentra en la lista de estados posibles.");
             }
 
             return indice;
@@ -900,7 +916,7 @@ namespace Sui.Machine
         {
             if (string.IsNullOrEmpty(pNameState))
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState): The name IsNullOrEmpty is true.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState): The name IsNullOrEmpty is true.");
                 return -1;
             }
 
@@ -913,7 +929,7 @@ namespace Sui.Machine
                 }
             }
 
-            Debug.LogWarning($"({_go.GetType().Name}->MachineState): The state {pNameState} not found on the list of states.");
+            Debug.LogWarning($"({_host.GetType().Name}->MachineState): The state {pNameState} not found on the list of states.");
             return -1;
         }
 
@@ -988,30 +1004,40 @@ namespace Sui.Machine
             if (!_possibleStates.Contains(novoState))
                 _possibleStates.Add(novoState);
             else
-                Debug.LogWarning($"({_go.GetType().Name}->MachineState): The State {novoState.GetType().Name} it already exists in the list of possible states.");
+                Debug.LogWarning($"({_host.GetType().Name}->MachineState): The State {novoState.GetType().Name} it already exists in the list of possible states.");
         }
 
-        // TODO: Descubrir porque en medio del porceso salta un warging proveniente de GetIndex.
-        // Porque llama a GetIndex (en ConstructorGestion) antes de añadirlo a estados posibles.
+
         private S createState_internal<S>() where S : IState
         {
             S state;
 
-            // Comprobar si S es un MonoBehaviour.
+#if UNITY_5_3_OR_NEWER
             if (typeof(MonoBehaviour).IsAssignableFrom(typeof(S)))
             {
-                // S es un MonoBehaviour, así que podemos usar AddComponent con reflexión
-                var component = _go.AddComponent(typeof(S));
-                if (component is S sComponent)
+                if (_host is GameObject go)
                 {
-                    state = sComponent;
+                    var component = go.AddComponent(typeof(S));
+
+                    if (component is S sComponent)
+                    {
+                        state = sComponent;
+                    }
+                    else
+                    {
+                        throw new InvalidCastException(
+                            $"The component of type cannot be converted '{component.GetType().Name}' to '{typeof(S).Name}'."
+                        );
+                    }
                 }
                 else
                 {
-                    throw new InvalidCastException($"The component of type cannot be converted '{component.GetType().Name}' to '{typeof(S).Name}'.");
+                    state = (S)Activator.CreateInstance(typeof(S));
                 }
+
             }
             else
+#endif
             {
                 state = (S)Activator.CreateInstance(typeof(S));
             }
@@ -1031,52 +1057,42 @@ namespace Sui.Machine
         }
 
         // ***********************( Constructores )*********************** //
-        public MachineState(GameObject goHost, List<IState> estadosPosibles, O Owner)
+        public MachineState(object pHost, List<IState> pPossibleStates, O pOwner)
         {
-            PossibleStates = estadosPosibles ?? new List<IState>();
+            PossibleStates = pPossibleStates ?? new List<IState>();
 
-            inicializar(goHost, Owner);
+            inicializar(pHost, pOwner);
         }
-        public MachineState(GameObject goHost, O Owner)
+        public MachineState(object pHost, O pOwner)
         {
-            inicializar(goHost, Owner);
+            inicializar(pHost, pOwner);
         }
 
 
         /// <summary>
         /// If you are not the MachinState developer, NEVER use anything in Spanish.
         /// </summary>
-        private void inicializar(GameObject goHost, O Owner)
+        private void inicializar(object pHost, O pOwner)
         {
-            if (goHost == null)
+            if (pHost == null)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState): El GameObject host es null en Inicializar.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState): El GameObject host es null en Inicializar.");
                 return;
             }
 
-            if (Owner == null)
+            if (pOwner == null)
             {
-                Debug.LogError($"({_go.GetType().Name}->MachineState): La fuente de datos es null en Inicializar.");
+                Debug.LogError($"({_host.GetType().Name}->MachineState): La fuente de datos es null en Inicializar.");
                 return;
             }
 
             _transitions ??= new();
             _possibleStates ??= new(this);
 
-            _go = goHost;
-            this._owner = Owner;
+            _host = pHost;
+            _owner = pOwner;
 
-            if (GestionadorMachineState.Instancia == null)
-            {
-                GameObject gestionadorGO = new("GestionadorMachineState");
-                _manager = gestionadorGO.AddComponent<GestionadorMachineState>();
-                GestionadorMachineState.Instancia.AgregarMaquina(this);
-            }
-            else
-            {
-                _manager = GestionadorMachineState.Instancia;
-                GestionadorMachineState.Instancia.AgregarMaquina(this);
-            }
+            GestionadorMachineState.AddMachine_internal(this);
         }
     }
 
@@ -1084,69 +1100,95 @@ namespace Sui.Machine
     /// <summary>
     /// If you are not the MachinState developer, NEVER use anything in Spanish.
     /// </summary>
-    public class GestionadorMachineState : MonoBehaviour
+    public static class GestionadorMachineState 
     {
         // ***********************( Variables )*********************** //
-        public static GestionadorMachineState Instancia { get; private set; }
-
-        private List<IMachineState> _maquinasDeEstados;
-        private int _crescendoId = 0;
+        //public static GestionadorMachineState Instancia { get; private set; }
+        private static List<IMachineState> _allMachines = new List<IMachineState>();
+        private static int _crescendoId = 0;
+        private static bool _init_flag = false;
 
         // ***********************( GSI )*********************** //
 
         // ***********************( Eventos )*********************** //
 
         // ***********************( Unity )*********************** //
-        private void Awake()
-        {
-            if (Instancia == null)
-            {
-                Instancia = this;
-                DontDestroyOnLoad(this);
-            }
-            else
-            {
-                Destroy(this);
-            }
+        //private void Awake()
+        //{
+        //    if (Instancia == null)
+        //    {
+        //        Instancia = this;
+        //        DontDestroyOnLoad(this);
+        //    }
+        //    else
+        //    {
+        //        Destroy(this);
+        //    }
 
-            if (_maquinasDeEstados == null)
-                _maquinasDeEstados = new List<IMachineState>();
-        }
+        //    if (_maquinasDeEstados == null)
+        //        _maquinasDeEstados = new List<IMachineState>();
+        //}
 
-        private void Update()
-        {
-            this._maquinasDeEstados.ForEach(ms =>
-            {
-                if (ms.State != null && ms.State is IStateLittle noMono)
-                    noMono.Update();
-            });
-        }
+        //private void Update()
+        //{
+        //    this._maquinasDeEstados.ForEach(ms =>
+        //    {
+        //        if (ms.State != null && ms.State is IStateLittle noMono)
+        //            noMono.Update();
+        //    });
+        //}
 
-        private void FixedUpdate()
-        {
-            this._maquinasDeEstados.ForEach(ms =>
-            {
-                if (ms.Count >= 1)
-                    ms.UpdateTransitions();
+        //private void FixedUpdate()
+        //{
+        //    this._maquinasDeEstados.ForEach(ms =>
+        //    {
+        //        if (ms.Count >= 1)
+        //            ms.UpdateTransitions();
 
-                if (ms.State != null && ms.State is IStateLittle noMono)
-                    noMono.FixedUpdate();
-            });
-        }
+        //        if (ms.State != null && ms.State is IStateLittle noMono)
+        //            noMono.FixedUpdate();
+        //    });
+        //}
+
 
         // ***********************( Metodos )*********************** //
-        private int soliciteId_internal()
+        private static void init()
+        {
+            if (_init_flag)
+                return;
+            _init_flag = true;
+
+            updateTransition_internal();
+        }
+        private static async void updateTransition_internal()
+        {
+            while (true)
+            {
+                await Task.Delay(200);
+                _allMachines.ForEach(ms =>
+                {
+                    if (ms.Count >= 1)
+                        ms.UpdateTransitions();
+                });
+            }
+        }
+
+
+
+        private static int soliciteId_internal()
         {
             return ++_crescendoId;
         }
-
-        public void AgregarMaquina(IMachineState ms)
+        public static void AddMachine_internal(IMachineState ms)
         {
-            if (!_maquinasDeEstados.Contains(ms))
+            init();
+            if (!_allMachines.Contains(ms))
             {
                 ms.Identifier = soliciteId_internal();
-                _maquinasDeEstados.Add(ms);
+                _allMachines.Add(ms);
             }
         }
+
+
     }
 }

@@ -54,10 +54,11 @@ namespace Sui.Machine
 
         // ***********************( Eventos )*********************** //
         //event Action OnFirtsEnter;
-        [Obsolete]
         event Action<int> OnChangeId;
+
         [Obsolete]
         event Action<int> ChangeInt;
+        [Obsolete]
         event Action<IState> ChangeIState;
 
         // ***********************( Contructores )*********************** //
@@ -154,7 +155,7 @@ namespace Sui.Machine
     public interface IStateLittle
     {
         void Update();
-        void FixedUpdate();
+        void PhysicsUpdate();
     }
 
     public interface ITransitionState
@@ -170,7 +171,7 @@ namespace Sui.Machine
     public abstract class Intemediario_Little : IStateLittle
     {
         public virtual void Update() { }
-        public virtual void FixedUpdate() { }
+        public virtual void PhysicsUpdate() { }
     }
 
     // TODO: Implementar un sistema para estados pequeños que no necesiten MonoBehaviour.

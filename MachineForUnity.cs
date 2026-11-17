@@ -1,6 +1,3 @@
-
-
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -31,11 +28,12 @@ namespace Sui.Machine
 
     public partial class MachineState<O> : IMachineState where O : class
     {
+        public GameObject GetGameObject() => _host as GameObject;
 
 
 
 
-
+        //TODO: To-Do
         // ***********************( Metodos Limpieza Estados )*********************** //
         private void destruirEstado(IState _estado)
         {
@@ -79,7 +77,7 @@ namespace Sui.Machine
                     _idesExluidos.Add(_estadoIndividual.Identificador);
             }
 
-            IState[] _todosEstados = _go.GetComponents<IState>();
+            IState[] _todosEstados = GetGameObject().GetComponents<IState>();
             foreach (var _estadoIndividual in _todosEstados)
             {
                 if (
