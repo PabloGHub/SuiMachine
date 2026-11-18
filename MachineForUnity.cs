@@ -51,8 +51,8 @@ namespace Sui.Machine
         {
             if (eEstado != null)
             {
-                if (eEstado == State)
-                    State = null;
+                if (eEstado == CurrentState)
+                    CurrentState = null;
 
                 eEstado.enabled = false;
                 destruirEstado(eEstado);

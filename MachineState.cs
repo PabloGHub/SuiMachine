@@ -33,7 +33,7 @@ namespace Sui.Machine
 
     public interface IMachineState
     {
-        IState State { get; set; }
+        IState CurrentState { get; set; }
         int Count { get; }
 
         int Identifier { get; set; }
@@ -249,7 +249,7 @@ namespace Sui.Machine
 
         // ***********************( Getter, Setters e Indesxadores )*********************** //
         // TODO: Si llega un State desconocido, que se cree automaticamente y se añada a la lista de estados posibles.
-        public IState State
+        public IState CurrentState
         {
             get
             {
@@ -268,6 +268,10 @@ namespace Sui.Machine
                 UpdateTransitions_internal();
             }
         }
+
+        public S GetCurrentState<S>() where S : class => CurrentState as S;
+        public IState GetCurrentState() => CurrentState;
+
 
         int IMachineState.Identifier
         {
@@ -443,7 +447,7 @@ namespace Sui.Machine
 
         public int IndexState
         {
-            get { return GetIndex(State); }
+            get { return GetIndex(CurrentState); }
         }
 
 
@@ -532,7 +536,7 @@ namespace Sui.Machine
         /// <param name="eNovoId">Es: Posicion en int del 'estadosPosibles' <br /> En: Position in int of 'PossibleStates'</param>
         public (IState newS, IState oldS) ChangeState(int eNovoId, ChangeParam? eParam = null)
         {
-            var olds = State;
+            var olds = CurrentState;
             if (olds != null)
                 olds.ChangeOptions = eParam?.OldOptions ?? ChangeStateOptions.None; // Excepcion Null
 
@@ -553,7 +557,7 @@ namespace Sui.Machine
         /// <returns>Es: Retorna el nuevo estado cambiado <br />En: Returns the new changed state</returns>
         public (IState newS, IState oldS) ChangeState(string eNovoName, ChangeParam? eParam = null)
         {
-            var olds = State;
+            var olds = CurrentState;
 
             if (string.IsNullOrEmpty(eNovoName))
             {
@@ -633,7 +637,7 @@ namespace Sui.Machine
                 return false;
             }
 
-            State = lNovo;
+            CurrentState = lNovo;
             _salidaNovo = lNovo;
             return true;
         }
@@ -655,14 +659,14 @@ namespace Sui.Machine
 
             manejarCambioEstado(lNovo);
             UpdateTransitions_internal();
-            _salida = State;
+            _salida = CurrentState;
             return true;
         }
 
 
         public (IState newS, IState oldS) ForceChangeState(int eNovoId, ChangeParam? eParam = null)
         {
-            var olds = State;
+            var olds = CurrentState;
             if (olds != null)
                 olds.ChangeOptions = eParam?.OldOptions ?? ChangeStateOptions.None;
 
@@ -674,7 +678,7 @@ namespace Sui.Machine
 
         public (IState newS, IState oldS) ForceChangeState(string eNovoName, ChangeParam? eParam = null)
         {
-            var olds = State;
+            var olds = CurrentState;
 
             if (string.IsNullOrEmpty(eNovoName))
             {
@@ -715,7 +719,7 @@ namespace Sui.Machine
                 return null;
             }
 
-            State = null;
+            CurrentState = null;
             PossibleStates = _novoLista;
 
             return PossibleStates;
@@ -794,7 +798,7 @@ namespace Sui.Machine
         // ***********************( Metodos Forzar )*********************** //
         public void Exit()
         {
-            State = null;
+            CurrentState = null;
         }
 
 
@@ -808,12 +812,12 @@ namespace Sui.Machine
         // ***********************( Metodos Update )*********************** //
         public void Update()
         {
-            if (State != null && State is IStateLittle noMono)
+            if (CurrentState != null && CurrentState is IStateLittle noMono)
                 noMono.Update();
         }
         public void PhysicsUpdate()
         {
-            if (State != null && State is IStateLittle noMono)
+            if (CurrentState != null && CurrentState is IStateLittle noMono)
                 noMono.PhysicsUpdate();
         }
 
@@ -877,7 +881,7 @@ namespace Sui.Machine
         // ***********************( Indices )*********************** //
         public int GetIndex()
         {
-            return GetIndex(State);
+            return GetIndex(CurrentState);
         }
         /// <summary>
         /// ___________________( Español )___________________<br />
@@ -1049,7 +1053,7 @@ namespace Sui.Machine
             state.Init();
 
             state.ChangeInt += (int valor) => ChangeState(valor);
-            state.ChangeIState += (IState estado) => { State = estado; };
+            state.ChangeIState += (IState estado) => { CurrentState = estado; };
 
             state.Machine = this;
 
